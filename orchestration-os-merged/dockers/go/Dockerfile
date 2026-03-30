@@ -1,5 +1,12 @@
 FROM golang:1.23-alpine
+
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apk add --no-cache bash git curl wget jq vim nano file coreutils
+
 WORKDIR /app
-RUN apk add --no-cache git curl wget jq bash vim nano
-EXPOSE 8888
-CMD ["sh", "-c", "echo 'Zo Orchestration OS - Go runtime ready'"]
+
+RUN useradd -m -s /bin/bash zo
+
+USER zo
+
+CMD ["go", "version"]
