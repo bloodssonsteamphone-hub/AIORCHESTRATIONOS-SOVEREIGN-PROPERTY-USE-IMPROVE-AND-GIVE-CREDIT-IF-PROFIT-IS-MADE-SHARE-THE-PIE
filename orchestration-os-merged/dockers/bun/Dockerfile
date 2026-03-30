@@ -1,23 +1,5 @@
-FROM oven/bun:1.1-alpine
-
-# Install system tools
-RUN apk add --no-cache \
-    git curl bash vim nano jq \
-    python3 make g++
-
-# Install AI SDKs via bun
-RUN bun add -g openai @anthropic-ai/sdk
-
-# Install CLI tools
-RUN bun add -g serve http-server nodemon
-
-# Install AI agent frameworks
-RUN bun add -g llm-client assistant-js
-
+FROM oven/bun:alpine
 WORKDIR /app
-
-COPY agent.ts /app/agent.ts
-
+RUN apk add --no-cache git curl wget jq bash vim nano
 EXPOSE 8888
-
-CMD ["bun", "/app/agent.ts"]
+CMD ["bun", "-e", "console.log('Zo Orchestration OS - Bun runtime ready')"]

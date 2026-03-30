@@ -1,18 +1,6 @@
-FROM deno:2.0-alpine
-
-# Install system tools
-RUN apk add --no-cache \
-    git curl bash vim nano jq \
-    python3 make g++
-
-# Deno permissions
-RUN deno cache --reload https://deno.land/x/openai/openai.ts && \
-    deno cache --reload https://deno.land/x/anthropic/mod.ts
-
+FROM deno:alpine
 WORKDIR /app
-
-COPY agent.ts /app/agent.ts
-
+RUN apk add --no-cache git curl wget jq bash vim nano
+RUN deno install -g openai anthropic
 EXPOSE 8888
-
-CMD ["deno", "run", "--allow-all", "/app/agent.ts"]
+CMD ["deno", "-e", "console.log('Zo Orchestration OS - Deno runtime ready')"]
