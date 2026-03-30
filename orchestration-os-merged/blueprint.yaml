@@ -1,0 +1,385 @@
+# Zo Orchestration OS — Master Blueprint v3.0
+# Full YAML Image Specification
+
+zo_orchestration_os_image_v3:
+
+  title: "Zo Orchestration OS — Sovereign Polyglot Multimodal App‑Builder OS (L0–L8, God‑Mode Edition)"
+
+  canvas:
+    width: 8192
+    height: 4096
+    background: "obsidian-black"
+
+  # ─────────────────────────────────────────
+  # 1. GRID LAYOUT (MODULES)
+  # ─────────────────────────────────────────
+  grid:
+    columns: 4
+    rows: 4
+    regions:
+      - { id: "L0",        grid: "1,1", label: "L0 — Foundation" }
+      - { id: "L1",        grid: "1,2", label: "L1 — Runtimes" }
+      - { id: "L2",        grid: "1,3", label: "L2 — Agents" }
+      - { id: "L3",        grid: "1,4", label: "L3 — Tools" }
+      - { id: "L4",        grid: "2,1", label: "L4 — Workflows" }
+      - { id: "L5",        grid: "2,2", label: "L5 — Apps" }
+      - { id: "L6",        grid: "2,3", label: "L6 — Orchestrator" }
+      - { id: "L7",        grid: "2,4", label: "L7 — Deployment" }
+      - { id: "L8",        grid: "3,1", label: "L8 — Intelligence Routing (Free‑Path + Multi‑AI)" }
+      - { id: "PIPE",      grid: "3,2", label: "Execution Pipelines" }
+      - { id: "TREE",      grid: "3,3", label: "Dependency Tree Pathing" }
+      - { id: "HOOKS",     grid: "3,4", label: "Hooks & Integrations" }
+      - { id: "ONEPROMPT", grid: "4,1", label: "One‑Prompt App Builder" }
+      - { id: "CORE",      grid: "4,2", label: "Intelligence Core (Brains + Memory)" }
+      - { id: "OBS",       grid: "4,3", label: "Metrics, Eval & Observability" }
+      - { id: "META",      grid: "4,4", label: "Blueprint Index & Evolution" }
+
+  # ─────────────────────────────────────────
+  # 2. LAYERS (L0–L8)
+  # ─────────────────────────────────────────
+  layers:
+
+    L0:
+      title: "Foundation"
+      components:
+        - "Networking: Docker network, Traefik/Envoy, nginx"
+        - "Storage: Docker volumes, S3/MinIO"
+        - "Secrets: Vault, Docker secrets"
+        - "Observability: Prometheus, Loki, Grafana"
+        - "Scheduling: Docker Compose, custom controller"
+        - "Service Mesh: Traefik, Envoy"
+
+    L1:
+      title: "Runtimes"
+      runtimes:
+        - "Python, Node.js, Bash, Rust, Go, Lua, Deno, Bun"
+        - "Ruby, Elixir, Julia, PowerShell, Java, .NET"
+
+    L2:
+      title: "Agents"
+      agents:
+        - "Coder"
+        - "Architect"
+        - "Tester"
+        - "Docs"
+        - "Multimodal"
+        - "Orchestrator-Helper"
+        - "DevOps"
+        - "Security"
+
+    L3:
+      title: "Tools"
+      groups:
+        filesystem: ["fs.read", "fs.write", "fs.mkdir", "fs.exists", "fs.list", "fs.delete"]
+        execution: ["run.command", "run.tests", "run.interactive"]
+        http: ["http.request", "http.upload"]
+        llm: ["llm.complete", "llm.chat", "llm.plan", "llm.vision", "llm.embed"]
+        multimodal: ["image.generate", "image.edit", "audio.transcribe", "audio.speak", "video.extract_frames"]
+        db: ["db.query", "db.migrate", "db.backup"]
+        workflow: ["workflow.define", "workflow.run", "workflow.status"]
+        orchestrator: ["orchestrator.inspect", "orchestrator.patch", "orchestrator.health"]
+
+    L4:
+      title: "Workflows"
+      workflows:
+        - "wf-video-understanding"
+        - "wf-build-fullstack-app"
+        - "wf-release-windows-desktop-app"
+        - "wf-release-android-app"
+        - "wf-self-diagnose-and-repair"
+
+    L5:
+      title: "Apps"
+      apps:
+        - "Zo Orchestration Dashboard"
+        - "Multimodal AI Lab"
+        - "API Gateway Manager"
+        - "Log Analyzer"
+        - "Workflow Builder"
+        - "Container Manager"
+
+    L6:
+      title: "Orchestrator"
+      responsibilities:
+        - "Blueprint loading & validation"
+        - "Task & workflow routing"
+        - "LLM routing enforcement (L8)"
+        - "Hooks management (HTTP/MQ/FS/cron/CLI)"
+        - "Health, logs, metrics"
+        - "Self-repair & evolution"
+
+    L7:
+      title: "Deployment"
+      targets:
+        - "Windows EXE/MSIX"
+        - "Android APK/AAB"
+        - "Web SPA/PWA"
+        - "Linux AppImage/DEB/RPM"
+        - "macOS DMG/APP"
+
+    L8:
+      title: "Intelligence Routing (Free‑Path + Multi‑AI)"
+      tiers:
+        - "local-free"
+        - "cloud-free"
+        - "paid-explicit-only"
+
+  # ─────────────────────────────────────────
+  # 3. TREE PATHING (EXECUTION ORDER)
+  # ─────────────────────────────────────────
+  tree_pathing:
+    root: "L0"
+    edges:
+      - { from: "L0", to: "L1" }
+      - { from: "L1", to: "L2" }
+      - { from: "L2", to: "L3" }
+      - { from: "L3", to: "L4" }
+      - { from: "L4", to: "L5" }
+      - { from: "L5", to: "L7" }
+      - { from: "L6", to: "L8" }
+      - { from: "L8", to: "L2" }
+      - { from: "L8", to: "L3" }
+      - { from: "L8", to: "L4" }
+      - { from: "L6", to: "HOOKS" }
+      - { from: "L6", to: "CORE" }
+      - { from: "CORE", to: "OBS" }
+      - { from: "OBS", to: "META" }
+
+  # ─────────────────────────────────────────
+  # 4. EXECUTION PIPELINES
+  # ─────────────────────────────────────────
+  pipelines:
+    boot:
+      - "load L0–L3 (foundation, runtimes, agents, tools)"
+      - "load L8 routing config"
+      - "load workflows (L4)"
+      - "load apps (L5)"
+      - "load deployment (L7)"
+      - "load orchestrator (L6)"
+      - "load hooks & observability"
+      - "start intelligence core (brains + memory)"
+    task:
+      - "resolve workflow for task/app"
+      - "resolve agents & tools"
+      - "apply routing policy (L8)"
+      - "schedule steps on runtimes"
+      - "run in parallel where possible"
+      - "stream logs & metrics"
+      - "update memory fabric & blueprint state"
+    llm:
+      - "read routing policy (global/agent/tool/workflow)"
+      - "choose tier: local-free → cloud-free → paid-explicit-only"
+      - "if paid: require explicit approval"
+      - "optionally fan-out to multiple providers (federation)"
+      - "gather responses"
+      - "run eval (metrics/eval engine)"
+      - "select/merge best result"
+      - "log usage & performance"
+    one_prompt_app:
+      - "parse user prompt"
+      - "classify app type & constraints"
+      - "parallel design: architecture + DB schema + API routes"
+      - "parallel implementation: frontend + backend"
+      - "generate tests & docs"
+      - "run tests"
+      - "package for Windows/Android/Web"
+      - "emit artifacts + release workflow"
+
+  # ─────────────────────────────────────────
+  # 5. INTELLIGENCE CORE (BRAINS + MEMORY)
+  # ─────────────────────────────────────────
+  intelligence_core:
+    brains:
+      primary:
+        id: "zo-brain-primary"
+        roles:
+          - "Global task routing"
+          - "LLM routing (L8)"
+          - "Agent & workflow coordination"
+          - "Memory orchestration"
+          - "Self-repair decisions"
+      backup:
+        id: "zo-brain-backup"
+        roles:
+          - "Hot-standby mirror"
+          - "Shadow-eval of primary decisions"
+          - "Failover brain"
+        sync:
+          mode: "near-real-time"
+          channels:
+            - "event-log"
+            - "state-snapshots"
+            - "metrics-stream"
+    failover_policy:
+      triggers:
+        - "orchestrator healthcheck fail"
+        - "brain latency spike"
+        - "panic error"
+      actions:
+        - "promote backup to primary"
+        - "spawn new backup"
+    memory_fabric:
+      layers:
+        - id: "short_term"
+          desc: "Per-task/workflow context"
+          backend: ["Redis", "in-memory"]
+        - id: "mid_term"
+          desc: "Per-app/project state"
+          backend: ["PostgreSQL", "vector store"]
+        - id: "long_term"
+          desc: "Blueprint history, eval logs, learned patterns"
+          backend: ["PostgreSQL", "S3/MinIO"]
+      features:
+        - "Shared read/write API for all agents/tools"
+        - "Consistent context across AIs"
+        - "Checkpoint/resume for workflows"
+        - "Self-repair uses historical failures"
+
+  # ─────────────────────────────────────────
+  # 6. MULTI‑AI ROUTING & FEDERATION (L8)
+  # ─────────────────────────────────────────
+  routing:
+    tiers:
+      - "local-free"
+      - "cloud-free"
+      - "paid-explicit-only"
+    providers:
+      local-free:
+        - { id: "ollama", models: ["qwen2.5-coder", "llama3.1", "phi3.5", "deepseek-coder", "qwen2-vl", "whisper", "stable-diffusion"] }
+      cloud-free:
+        - { id: "openrouter-free", models: ["gemini-flash", "llama3.1-8b", "mistral-7b"] }
+        - { id: "groq-free", models: ["llama3.1-8b", "mixtral-8x7b"] }
+      paid-explicit-only:
+        - { id: "chatgpt", models: ["gpt-4.1", "gpt-4.1-mini", "gpt-o1", "gpt-o3"] }
+        - { id: "gemini", models: ["gemini-2.0-pro", "gemini-2.0-flash"] }
+        - { id: "claude", models: ["claude-3.7"] }
+    federation:
+      strategies:
+        - id: "consensus"
+          desc: "Fan-out to multiple models, compare, choose best"
+        - id: "champion-challenger"
+          desc: "Primary vs challenger, track win-rate"
+        - id: "specialist-routing"
+          desc: "Route by domain: code, vision, reasoning, multimodal"
+      parallelism:
+        llm_calls:
+          max_parallel: 4
+          pattern:
+            - "fan-out"
+            - "gather"
+            - "eval"
+            - "select/merge"
+    multimodal_defaults:
+      vision: "qwen2-vl"
+      audio_stt: "whisper"
+      image_gen: "stable-diffusion"
+
+  # ─────────────────────────────────────────
+  # 7. ONE‑PROMPT APP BUILDER
+  # ─────────────────────────────────────────
+  one_prompt_builder:
+    supported_app_types:
+      - "Fullstack Web App"
+      - "Android App"
+      - "Windows Desktop App"
+      - "API Service"
+      - "Dashboard"
+      - "Multimodal App"
+      - "AI Agent App"
+      - "Automation Tool"
+      - "Game Helper / Tooling"
+      - "Custom Hybrid"
+    flow:
+      - "Understand intent (LLM federation, consensus mode)"
+      - "Generate architecture (Architect agent)"
+      - "Generate DB schema"
+      - "Generate API routes"
+      - "Generate frontend (React/Vite/React Native)"
+      - "Generate backend (FastAPI/Node/etc.)"
+      - "Generate tests"
+      - "Generate docs"
+      - "Run tests"
+      - "Package (EXE/APK/Web)"
+      - "Optionally release via workflows"
+
+  # ─────────────────────────────────────────
+  # 8. METRICS, EVAL & OBSERVABILITY
+  # ─────────────────────────────────────────
+  metrics_and_eval:
+    metrics:
+      - "latency_per_provider"
+      - "token_usage_per_model"
+      - "success_rate_per_workflow"
+      - "error_rate_per_agent"
+      - "self_repair_success_rate"
+    eval:
+      modes:
+        - "automatic regression checks"
+        - "A/B model comparison"
+        - "prompt/template performance tracking"
+        - "workflow outcome scoring"
+    feedback_loops:
+      - "adjust routing weights based on performance"
+      - "suggest prompt/template improvements"
+      - "quarantine underperforming models/tools"
+  observability:
+    stack:
+      - "Prometheus"
+      - "Loki"
+      - "Grafana"
+    views:
+      - "LLM usage & cost"
+      - "Workflow health"
+      - "App build success/failure"
+      - "Self-repair activity"
+
+  # ─────────────────────────────────────────
+  # 9. HOOKS & INTEGRATIONS
+  # ─────────────────────────────────────────
+  hooks:
+    http:
+      - "Web apps → /tasks, /workflows/:id/start"
+      - "External AIs → /routing, /eval"
+    mq:
+      - "Task queue: zo-tasks"
+    fs:
+      - "Blueprint hot-reload: /workspace/blueprint.yaml"
+    cron:
+      - "Daily health check → wf-self-diagnose-and-repair"
+      - "Weekly cleanup → cleanup-old-artifacts"
+    cli:
+      - "Git commit hook → pre: run-tests, post: push-to-registry"
+
+  # ─────────────────────────────────────────
+  # 10. SEMANTICS (HOW TO READ THIS IMAGE)
+  # ─────────────────────────────────────────
+  semantics:
+    node_types:
+      - "layer"
+      - "runtime"
+      - "agent"
+      - "tool"
+      - "workflow"
+      - "app"
+      - "deployment_target"
+      - "orchestrator"
+      - "router"
+      - "brain"
+      - "memory_layer"
+      - "metrics_node"
+    edge_types:
+      - "uses"
+      - "runs-on"
+      - "calls"
+      - "builds"
+      - "packages"
+      - "deploys-to"
+      - "monitors"
+      - "routes-via"
+      - "shares-memory-with"
+      - "evaluates"
+      - "backs-up"
+    usage:
+      - "Render as a single systems diagram."
+      - "Parse to spin up the full OS."
+      - "Extend by adding nodes/edges without breaking structure."

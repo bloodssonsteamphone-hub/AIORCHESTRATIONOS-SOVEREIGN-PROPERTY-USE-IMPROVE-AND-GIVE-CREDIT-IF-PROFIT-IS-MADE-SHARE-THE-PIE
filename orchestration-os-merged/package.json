@@ -1,0 +1,27 @@
+{
+  "name": "zo-orchestration-os",
+  "version": "3.0.0",
+  "description": "Sovereign polyglot AI Operating System - builds, tests, ships fullstack apps",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsc && node dist/server.js"
+  },
+  "dependencies": {
+    "@types/archiver": "^7.0.0",
+    "archiver": "^7.0.1",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "pg": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.20.0",
+    "typescript": "^5.6.0"
+  }
+}

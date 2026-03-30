@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Zo Docker Dashboard</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fff}
+.header{border-bottom:1px solid #1a1a1a;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:18px;font-weight:700}
+.header p{font-size:11px;color:#666;font-family:monospace;margin-top:2px}
+.tabs{display:flex;gap:4px}
+.tab{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:#1a1a1a;color:#888;transition:all .15s}
+.tab.active{background:#7c3aed;color:#fff}
+.tab:hover:not(.active){background:#222;color:#ccc}
+.main{padding:24px;max-width:1400px;margin:0 auto}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.card{background:#111;border:1px solid #1a1a1a;border-radius:10px;padding:20px;margin-bottom:16px}
+.card-title{font-size:12px;color:#888;font-weight:600;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em}
+.row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a1a1a}
+.row:last-child{border-bottom:none}
+.badge{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:monospace;text-transform:uppercase}
+.badge-success{background:#052e16;color:#4ade80;border:1px solid #166534}
+.badge-failed{background:#2c0b0e;color:#f87171;border:1px solid #991b1b}
+.badge-running{background:#0c1829;color:#60a5fa;border:1px solid #1e40af}
+.badge-idle{background:#18181b;color:#71717a;border:1px solid #3f3f46}
+.badge-stopped{background:#1c1407;color:#fbbf24;border:1px solid #92400e}
+.col-name{font-family:monospace;font-size:12px;color:#ccc;flex:1}
+.col-status{width:80px}
+.col-action{width:60px}
+select,input{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:6px;padding:6px 10px;color:#fff;font-size:12px;outline:none}
+select:focus,input:focus{border-color:#7c3aed}
+input{width:200px}
+textarea{width:100%;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:8px;padding:12px;color:#fff;font-family:monospace;font-size:12px;resize:none;outline:none;height:80px}
+.btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #333;background:#1a1a1a;color:#888}
+.btn-primary{padding:6px 14px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer}
+.btn-primary:hover{background:#6d28d9}
+.btn-primary:disabled{background:#333;color:#666;cursor:not-allowed}
+.btn-danger{padding:4px 10px;background:#991b1b;color:#fff;border:none;border-radius:5px;font-size:11px;cursor:pointer}
+.btn-start{padding:4px 10px;background:#15803d;color:#fff;border:none;border-radius:5px;font-size:11px;cursor:pointer}
+.btn-stop{padding:4px 10px;background:#b45309;color:#fff;border:none;border-radius:5px;font-size:11px;cursor:pointer}
+pre{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:#555;overflow:auto;max-height:300px}
+.empty{font-size:12px;color:#444;padding:10px 0}
+.info-row{display:flex;gap:20px;padding:4px 0}
+.info-key{font-size:11px;color:#555;width:120px}
+.info-val{font-size:11px;color:#aaa;font-family:monospace}
+.exec-output{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:#4ade80;min-height:60px;white-space:pre-wrap;max-height:200px;overflow:auto}
+.exec-error{color:#f87171}
+.exec-cmd{display:flex;gap:8px;margin-top:10px}
+.exec-cmd input{flex:1}
+.term-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.term-header span{font-size:12px;color:#888}
+</style>
+</head>
+<body>
+<div class="header">
+  <div><h1>Zo Docker Dashboard</h1><p id="version">L0/L7 Container Management</p></div>
+  <div class="tabs">
+    <button class="tab active" data-tab="containers">Containers</button>
+    <button class="tab" data-tab="images">Images</button>
+    <button class="tab" data-tab="networks">Networks</button>
+    <button class="tab" data-tab="volumes">Volumes</button>
+    <button class="tab" data-tab="exec">Quick Exec</button>
+  </div>
+</div>
+<div class="main">
+  <div id="tab-containers">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Active Containers</div>
+        <div class="term-header"><span id="containerCount">0 running</span><button class="btn" id="refreshContainers">Refresh</button></div>
+        <div id="containerList"><div class="empty">Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Container Details</div>
+        <div id="containerDetail"><div class="empty">Select a container</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Quick Commands</div>
+      <div class="exec-output" id="quickOutput">Ready. Enter a command and press Run.</div>
+      <div class="exec-cmd">
+        <input id="quickCmd" placeholder="docker ps --format table, or any shell command..."/>
+        <button class="btn-primary" id="runQuickCmd">Run</button>
+      </div>
+    </div>
+  </div>
+  <div id="tab-images" style="display:none">
+    <div class="card">
+      <div class="card-title">Docker Images</div>
+      <div class="term-header"><span id="imageCount">0 images</span><button class="btn" id="refreshImages">Refresh</button></div>
+      <div id="imageList"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+  <div id="tab-networks" style="display:none">
+    <div class="card">
+      <div class="card-title">Docker Networks</div>
+      <div id="networkList"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+  <div id="tab-volumes" style="display:none">
+    <div class="card">
+      <div class="card-title">Docker Volumes</div>
+      <div id="volumeList"><div class="empty">Loading...</div></div>
+    </div>
+  </div>
+  <div id="tab-exec" style="display:none">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Terminal</div>
+        <div class="exec-output" id="termOutput">Ready for commands.</div>
+        <div class="exec-cmd">
+          <input id="termCmd" placeholder="bash command..."/>
+          <button class="btn-primary" id="runTermCmd">Run</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Built-in Actions</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn" id="actionPs">docker ps -a</button>
+          <button class="btn" id="actionImages">docker images</button>
+          <button class="btn" id="actionSystem">docker system df</button>
+          <button class="btn" id="actionLogs">tail -20 /dev/shm/*.log 2>/dev/null || echo "No logs"</button>
+          <button class="btn" id="actionTop">ps aux | head -20</button>
+          <button class="btn" id="actionDf">df -h</button>
+          <button class="btn" id="actionMem">free -m</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const API = window.location.hostname + ':3000';
+let selectedContainer = null;
+
+function badge(status) {
+  const map = { running: 'badge-running', exited: 'badge-failed', created: 'badge-idle', paused: 'badge-stopped', restarting: 'badge-running' };
+  return '<span class="badge ' + (map[status] || 'badge-idle') + '">' + (status || 'unknown') + '</span>';
+}
+
+async function runCmd(cmd) {
+  const res = await fetch('http://' + API + '/api/runtimes/execute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: cmd, runtime: 'bash' })
+  }).catch(() => null);
+  if (!res) return { stdout: 'API unavailable', stderr: '', exitCode: 1 };
+  return res.json();
+}
+
+async function loadContainers() {
+  const out = await runCmd('docker ps -a --format "{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}"');
+  const lines = (out.stdout || '').trim().split('\n').filter(l => l.trim());
+  document.getElementById('containerCount').textContent = lines.length + ' container(s)';
+  if (lines.length === 0) {
+    document.getElementById('containerList').innerHTML = '<div class="empty">No containers found (Docker may not be available)</div>';
+    return;
+  }
+  document.getElementById('containerList').innerHTML = lines.map(l => {
+    const [id, name, image, status, ports] = l.split('\t');
+    return '<div class="row" data-id="' + id + '" data-name="' + name + '">'
+      + badge(status.includes('Up') ? 'running' : 'exited')
+      + '<span class="col-name">' + name + '</span>'
+      + '<span class="col-status" style="font-size:10px;color:#555">' + (ports || '-').substring(0,20) + '</span>'
+      + '<button class="btn-start btn-sm" data-action="start">start</button>'
+      + '<button class="btn-danger btn-sm" data-action="stop">stop</button>'
+      + '</div>';
+  }).join('');
+}
+
+async function loadImages() {
+  const out = await runCmd('docker images --format "{{.Repository}}\t{{.Tag}}\t{{.Size}}\t{{.CreatedSince}}"');
+  const lines = (out.stdout || '').trim().split('\n').filter(l => l.trim());
+  document.getElementById('imageCount').textContent = lines.length + ' image(s)';
+  if (lines.length === 0) {
+    document.getElementById('imageList').innerHTML = '<div class="empty">No images found</div>';
+    return;
+  }
+  document.getElementById('imageList').innerHTML = lines.map(l => {
+    const [repo, tag, size, created] = l.split('\t');
+    return '<div class="row"><span class="col-name" style="color:#60a5fa">' + repo + '</span><span style="font-size:11px;color:#555">' + tag + '</span><span style="font-size:10px;color:#555;margin-left:auto">' + size + '</span></div>';
+  }).join('');
+}
+
+async function loadNetworks() {
+  const out = await runCmd('docker network ls --format "{{.Name}}\t{{.Driver}}\t{{.Scope}}"');
+  const lines = (out.stdout || '').trim().split('\n').filter(l => l.trim());
+  if (lines.length === 0) {
+    document.getElementById('networkList').innerHTML = '<div class="empty">No networks found</div>';
+    return;
+  }
+  document.getElementById('networkList').innerHTML = lines.map(l => {
+    const [name, driver, scope] = l.split('\t');
+    return '<div class="row"><span class="col-name">' + name + '</span><span style="font-size:11px;color:#555">' + driver + '</span><span style="font-size:10px;color:#555;margin-left:auto">' + scope + '</span></div>';
+  }).join('');
+}
+
+async function loadVolumes() {
+  const out = await runCmd('docker volume ls --format "{{.Name}}\t{{.Driver}}\t{{.Mountpoint}}"');
+  const lines = (out.stdout || '').trim().split('\n').filter(l => l.trim());
+  if (lines.length === 0) {
+    document.getElementById('volumeList').innerHTML = '<div class="empty">No volumes found</div>';
+    return;
+  }
+  document.getElementById('volumeList').innerHTML = lines.map(l => {
+    const [name, driver] = l.split('\t');
+    return '<div class="row"><span class="col-name">' + name + '</span><span style="font-size:11px;color:#555;margin-left:auto">' + driver + '</span></div>';
+  }).join('');
+}
+
+async function showContainerDetail(id) {
+  const out = await runCmd('docker inspect ' + id + ' 2>/dev/null | head -60');
+  document.getElementById('containerDetail').innerHTML = '<pre>' + (out.stdout || 'No details available') + '</pre>';
+}
+
+function showOutput(el, out, isError) {
+  el.textContent = (out.stdout || '') + (out.stderr ? '\n[stderr] ' + out.stderr : '');
+  el.className = 'exec-output' + (isError ? ' exec-error' : '');
+}
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('[id^="tab-"]').forEach(c => c.style.display = 'none');
+    tab.classList.add('active');
+    document.getElementById('tab-' + tab.dataset.tab).style.display = 'block';
+    if (tab.dataset.tab === 'containers') loadContainers();
+    if (tab.dataset.tab === 'images') loadImages();
+    if (tab.dataset.tab === 'networks') loadNetworks();
+    if (tab.dataset.tab === 'volumes') loadVolumes();
+  });
+});
+
+document.getElementById('refreshContainers').addEventListener('click', loadContainers);
+document.getElementById('refreshImages').addEventListener('click', loadImages);
+
+document.getElementById('containerList').addEventListener('click', async e => {
+  const row = e.target.closest('.row');
+  if (!row) return;
+  const name = row.dataset.name;
+  if (e.target.dataset.action === 'start') {
+    showOutput(document.getElementById('quickOutput'), await runCmd('docker start ' + name));
+    loadContainers();
+  } else if (e.target.dataset.action === 'stop') {
+    showOutput(document.getElementById('quickOutput'), await runCmd('docker stop ' + name));
+    loadContainers();
+  } else {
+    showContainerDetail(row.dataset.id);
+  }
+});
+
+async function runCmdUI(inputId, outputId) {
+  const cmd = document.getElementById(inputId).value.trim();
+  if (!cmd) return;
+  const out = await runCmd(cmd);
+  showOutput(document.getElementById(outputId), out, out.exitCode !== 0);
+}
+
+document.getElementById('runQuickCmd').addEventListener('click', () => runCmdUI('quickCmd', 'quickOutput'));
+document.getElementById('quickCmd').addEventListener('keydown', e => { if (e.key === 'Enter') runCmdUI('quickCmd', 'quickOutput'); });
+
+document.getElementById('runTermCmd').addEventListener('click', () => runCmdUI('termCmd', 'termOutput'));
+document.getElementById('termCmd').addEventListener('keydown', e => { if (e.key === 'Enter') runCmdUI('termCmd', 'termOutput'); });
+
+['actionPs', 'actionImages', 'actionSystem', 'actionLogs', 'actionTop', 'actionDf', 'actionMem'].forEach(id => {
+  document.getElementById(id).addEventListener('click', async () => {
+    const cmd = document.getElementById(id).textContent;
+    showOutput(document.getElementById('termOutput'), await runCmd(cmd));
+  });
+});
+
+loadContainers();
+</script>
+</body>
+</html>
