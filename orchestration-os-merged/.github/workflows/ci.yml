@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npm run build
+
+  docker-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test Python container
+        run: docker build -f dockers/python/Dockerfile dockers/python/ --quiet
+
+      - name: Test Node.js container
+        run: docker build -f dockers/nodejs/Dockerfile dockers/nodejs/ --quiet
+
+      - name: Test Bun container
+        run: docker build -f dockers/bun/Dockerfile dockers/bun/ --quiet
