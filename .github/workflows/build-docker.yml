@@ -4,13 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - 'dockers/**'
+      - 'orchestration-os-merged/dockers/**'
       - '.github/workflows/build-docker.yml'
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: zo-orchestration-os
 
 jobs:
   docker-build:
@@ -30,15 +29,10 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Debug context
-        run: |
-          echo 'Runtime: ${{ matrix.runtime }}'
-          ls -la dockers/${{ matrix.runtime }}/
-          cat dockers/${{ matrix.runtime }}/Dockerfile
       - name: Build and push
         run: |
           REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]' | tr '-' '--')
-          docker build -t test:runtime dockers/${{ matrix.runtime }}/
-          docker tag test:runtime ghcr.io/${REPO}/${{ matrix.runtime }}:latest
-          docker tag test:runtime ghcr.io/${REPO}/${{ matrix.runtime }}:${{ github.sha }}
+          docker build -t test runtime orchestration-os-merged/dockers/${{ matrix.runtime }}/
+          docker tag test runtime ghcr.io/${REPO}/${{ matrix.runtime }}:latest
+          docker tag test runtime ghcr.io/${REPO}/${{ matrix.runtime }}:${{ github.sha }}
           docker push ghcr.io/${REPO}/${{ matrix.runtime }}:latest
