@@ -2,15 +2,15 @@ name: Build Docker Images
 
 on:
   push:
-    branches: [master, main]
+    branches: [main]
     paths:
-      - 'orchestration-os-merged/dockers/**'
+      - 'dockers/**'
       - '.github/workflows/build-docker.yml'
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/zo-orchestration-os
+  IMAGE_NAME: zo-orchestration-os
 
 jobs:
   docker-build:
@@ -18,36 +18,27 @@ jobs:
     permissions:
       contents: read
       packages: write
-
     strategy:
+      fail-fast: false
       matrix:
         runtime: [python, nodejs, deno, bun, ruby, go, rust, bash]
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
         with:
-          sparse-checkout: |
-            orchestration-os-merged/dockers
-            .github/workflows/build-docker.yml
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
+          registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v6
-        with:
-          context: ./orchestration-os-merged/dockers/${{ matrix.runtime }}
-          push: true
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.runtime }}:latest
-            ${{ env.IMAGE_NAME }}/${{ matrix.runtime }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      - name: Debug context
+        run: |
+          echo 'Runtime: ${{ matrix.runtime }}'
+          ls -la dockers/${{ matrix.runtime }}/
+          cat dockers/${{ matrix.runtime }}/Dockerfile
+      - name: Build and push
+        run: |
+          REPO=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]' | tr '-' '--')
+          docker build -t test:runtime dockers/${{ matrix.runtime }}/
+          docker tag test:runtime ghcr.io/${REPO}/${{ matrix.runtime }}:latest
+          docker tag test:runtime ghcr.io/${REPO}/${{ matrix.runtime }}:${{ github.sha }}
+          docker push ghcr.io/${REPO}/${{ matrix.runtime }}:latest
