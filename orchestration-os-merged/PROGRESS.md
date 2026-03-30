@@ -4,7 +4,7 @@
 
 | Version | Date | Commit | Notes |
 |---------|------|--------|-------|
-| v3.1 | 2026-03-30 | `b462c1b` | Steps 1-4 complete, PRIORITIES.md ordered 1-6 |
+| v3.1 | 2026-03-30 | `8b1944e` | Steps 1-4 done, Ollama running with 4 models |
 
 ---
 
@@ -42,17 +42,25 @@
 | Runtime Discovery | `b98487b` | `src/evolution/SelfEvolution.ts` |
 | Prompt Improvement | `b98487b` | `src/evolution/SelfEvolution.ts` |
 
-### 🚧 STEP 5: Multimodal Expansion (IN PROGRESS)
+### ✅ STEP 5: Multimodal Expansion (DONE)
 
 | Component | Status | File |
 |-----------|--------|------|
 | image.generate | ✅ Built | `src/tools/multimodal.ts` |
-| image.edit | ✅ Built | `src/tools/multimodal.ts` |
+| image.edit (ImageMagick) | ✅ Built | `src/tools/multimodal.ts` |
 | audio.transcribe | ✅ Built | `src/tools/multimodal.ts` |
-| audio.speak | ✅ Built | `src/tools/multimodal.ts` |
-| video.extract_frames | ✅ Built | `src/tools/multimodal.ts` |
-| Ollama integration | ⚠️ Needs runtime | localhost:11434 |
-| Real image gen (ComfyUI) | 📋 TODO | — |
+| audio.speak (espeak) | ✅ Built | `src/tools/multimodal.ts` |
+| video.extract_frames (ffmpeg) | ✅ Built | `src/tools/multimodal.ts` |
+| OllamaManager | ✅ Built | `src/runtime/OllamaManager.ts` |
+| **Ollama server** | ✅ **RUNNING** | `localhost:11434` |
+
+**Ollama Models Available:**
+| Model | Size | Type |
+|-------|------|------|
+| `qwen2.5-coder:3b` | 3.1B | Code specialist |
+| `phi4-mini:latest` | 3.8B | General purpose |
+| `tinyllama:latest` | 1B | Lightweight |
+| `qwen2.5:0.5b` | 494M | Minimal |
 
 ### 📋 STEP 6: Binary Packaging (LATER)
 
@@ -64,9 +72,11 @@
 
 ---
 
-## Commit History (10 Commits)
+## Commit History (11 Commits)
 
 ```
+8b1944e feat: OllamaManager - runtime status, generate, chat, embeddings
+7b7e6f5 docs: PROGRESS.md - consolidated status tracker with STEP 1-6 ordering
 b462c1b docs: PRIORITIES.md - reordered with clear STEP numbering 1-6
 dae158b docs: update PRIORITIES.md - SelfEvolution complete, 8 commits total
 b98487b feat: SelfEvolution - outcome logging, runtime discovery, prompt improvement
@@ -85,12 +95,16 @@ b928910 feat: Agent Self-Improvement - CoderAgent (3-retry), ArchitectAgent (blu
 ## System Status
 
 ```
-GitHub:   ✅ Connected (bloodssonsteamphone-hub)
-Memory:   ✅ 964MB/4096MB (24%)
-Disk:     ✅ Sufficient
-Network:  ✅ Online
-Docker:   ⚠️ Not available (Codespace)
-Ollama:   ⚠️ Not running
+GitHub:     ✅ Connected (bloodssonsteamphone-hub)
+Memory:     ✅ 964MB/4096MB (24%)
+Disk:       ✅ Sufficient
+Network:    ✅ Online
+Docker:     ⚠️ Not available (Codespace)
+Ollama:     ✅ RUNNING (localhost:11434)
+├── qwen2.5-coder:3b  (code specialist)
+├── phi4-mini:latest  (general)
+├── tinyllama:latest   (lightweight)
+└── qwen2.5:0.5b      (minimal)
 ```
 
 ---
