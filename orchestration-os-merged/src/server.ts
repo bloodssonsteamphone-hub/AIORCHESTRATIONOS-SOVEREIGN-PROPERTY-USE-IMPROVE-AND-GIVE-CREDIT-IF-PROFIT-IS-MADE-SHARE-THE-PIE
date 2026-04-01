@@ -130,6 +130,52 @@ app.get('/api/build/:sessionId', (req, res) => {
   res.json(session);
 });
 
+// SSE endpoint for real-time build progress
+app.get('/api/build/:sessionId/stream', (req, res) => {
+  const { sessionId } = req.params;
+  
+  // Set SSE headers
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  
+  // Send initial connection message
+  res.write(`data: ${JSON.stringify({ type: 'connected', sessionId })}\n\n`);
+  
+  // Poll for session updates every 500ms
+  const interval = setInterval(() => {
+    const session = sessions.get(sessionId);
+    if (!session) {
+      res.write(`data: ${JSON.stringify({ type: 'error', message: 'Session not found' })}\n\n`);
+      clearInterval(interval);
+      res.end();
+      return;
+    }
+    
+    res.write(`data: ${JSON.stringify({
+      type: 'progress',
+      sessionId,
+      status: session.status,
+      files: session.files?.length || 0,
+      error: session.error,
+      testResult: (session as any).testResult,
+    })}\n\n`);
+    
+    // Close when build is complete
+    if (session.status === 'success' || session.status === 'failure') {
+      clearInterval(interval);
+      res.write(`data: ${JSON.stringify({ type: 'done', sessionId, status: session.status })}\n\n`);
+      res.end();
+    }
+  }, 500);
+  
+  // Clean up on client disconnect
+  req.on('close', () => {
+    clearInterval(interval);
+  });
+});
+
 app.get('/api/build/:sessionId/download', async (req, res) => {
   const session = sessions.get(req.params.sessionId);
   if (!session) return res.status(404).json({ error: 'Session not found' });

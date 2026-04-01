@@ -328,6 +328,9 @@ export async function runBuild(sessionId: string, prompt: string): Promise<Sessi
     session.status = 'success';
     console.log(`[Coder] Generated ${result.files.length} files`);
     
+    // Run tests after code generation
+    await runTestsAfterBuild(session, plan);
+    
   } catch (error: any) {
     console.log(`[Error] ${error.message}`);
     session.status = 'failure';
@@ -335,6 +338,57 @@ export async function runBuild(sessionId: string, prompt: string): Promise<Sessi
   }
   
   return session;
+}
+
+// Wire test-runner into build pipeline
+async function runTestsAfterBuild(session: Session, plan: PlanResult): Promise<void> {
+  const { invokeTool } = await import('../tools/index.js');
+  
+  // Detect test framework from file types
+  const hasPython = session.files.some(f => f.path.endsWith('.py'));
+  const hasJS = session.files.some(f => f.path.match(/\.(js|ts|jsx|tsx)$/));
+  
+  let testFramework: string | undefined;
+  if (hasPython) testFramework = 'pytest';
+  else if (hasJS) testFramework = 'vitest';
+  
+  if (!testFramework) {
+    console.log('[Tester] No testable files detected, skipping tests');
+    return;
+  }
+  
+  console.log(`[Tester] Running ${testFramework} on generated files...`);
+  
+  // Write files to temp dir for testing
+  const tmpDir = `/tmp/zo-build-${session.id}`;
+  const { mkdirSync, writeFileSync } = await import('fs');
+  mkdirSync(tmpDir, { recursive: true });
+  
+  for (const file of session.files) {
+    const filePath = `${tmpDir}/${file.path}`;
+    const dir = filePath.substring(0, filePath.lastIndexOf('/'));
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(filePath, file.content);
+  }
+  
+  try {
+    const result = await invokeTool('test-runner', {
+      framework: testFramework,
+      cwd: tmpDir,
+      pattern: testFramework === 'pytest' ? 'test_*.py' : '*.test.(js|ts|tsx)',
+    });
+    
+    if (result.success) {
+      console.log(`[Tester] ✅ Tests passed`);
+      (session as any).testResult = { status: 'passed', output: result.data };
+    } else {
+      console.log(`[Tester] ⚠️ Tests failed or not found: ${result.error}`);
+      (session as any).testResult = { status: 'failed', output: result.error };
+    }
+  } catch (e: any) {
+    console.log(`[Tester] ⚠️ Test runner error: ${e.message}`);
+    (session as any).testResult = { status: 'error', output: e.message };
+  }
 }
 
 export { plannerAgent, coderAgent, parseCodeBlocks };
