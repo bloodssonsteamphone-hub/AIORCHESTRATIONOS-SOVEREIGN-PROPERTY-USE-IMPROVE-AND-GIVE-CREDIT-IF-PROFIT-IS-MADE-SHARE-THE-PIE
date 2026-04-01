@@ -33,7 +33,7 @@ interface CodeResult {
 async function plannerAgent(prompt: string): Promise<PlanResult> {
   const llm = await createLLMClient();
   
-  const systemPrompt = `You are an expert software architect. Analyze the user's request and create a detailed plan.
+  const systemPrompt = `You are an expert software architect. Analyze the user's request and create a detailed, production-ready plan.
 
 Output JSON format:
 {
@@ -53,8 +53,12 @@ Rules:
 - ALWAYS include: README.md, package.json or requirements.txt or go.mod
 - For web apps: include index.html, src/App.jsx, src/main.jsx
 - For APIs: include main server file, routes, models
-- Keep it simple but complete
-- Use modern, production-ready patterns`;
+- Keep it simple but COMPLETE — every file must have all imports, all functions, no placeholders
+- Use modern, production-ready patterns
+- For Python: use type hints, proper error handling, logging
+- For React: use functional components with hooks, proper state management
+- Include .env.example for any environment variables
+- ALWAYS include a test file (test_app.py or test_app.test.js)`;
 
   const response = await llm(prompt, systemPrompt);
   
@@ -126,19 +130,28 @@ async function coderAgent(plan: PlanResult, originalPrompt: string): Promise<Cod
   
   // Generate backend files
   if (backendFiles.length > 0) {
-    const prompt = `Generate COMPLETE code for: ${backendFiles.join(', ')}
+    const prompt = `You are an expert ${plan.techStack.backend || 'backend'} developer. Generate COMPLETE, RUNNABLE production code for the following files.
 
 Project: ${plan.description}
 Tech stack: ${JSON.stringify(plan.techStack)}
+Files to generate: ${backendFiles.join(', ')}
 
-Output format:
+CRITICAL RULES:
+- Output EVERY file listed above — no skipping any file
+- Every file must be COMPLETE with ALL imports, ALL functions, ALL error handling — NO placeholders, NO "// ... rest of code"
+- Use type hints for Python, TypeScript for Node.js
+- Add proper try/catch blocks, logging, and input validation
+- Include CORS setup if web-facing
+- Run the code mentally to ensure no syntax errors
+
+Output format for EACH file:
 === FILENAME: path/to/file.ext ===
-[complete code here]
+[complete file content here]
 
-Write REAL, RUNNABLE code with all imports and error handling.`;
+Write all files now. Start with ${backendFiles[0]}:`;
 
     try {
-      const response = await llm(prompt, 'You are an expert backend developer.');
+      const response = await llm(prompt, 'You are an expert backend developer. Generate complete, production-ready code. Do NOT skip any file or include placeholders.');
       const parsed = parseCodeBlocks(response);
       files.push(...parsed);
     } catch (e: any) {
@@ -148,19 +161,27 @@ Write REAL, RUNNABLE code with all imports and error handling.`;
   
   // Generate frontend files
   if (frontendFiles.length > 0) {
-    const prompt = `Generate COMPLETE code for: ${frontendFiles.join(', ')}
+    const prompt = `You are an expert frontend developer. Generate COMPLETE, RUNNABLE production code for the following files.
 
 Project: ${plan.description}
 Tech stack: ${plan.techStack.frontend || 'React/Vite'}
+Files to generate: ${frontendFiles.join(', ')}
 
-Output format:
-=== FILENAME: path/to/file.jsx ===
-[complete code here]
+CRITICAL RULES:
+- Output EVERY file listed above — no skipping any file
+- Every file must be COMPLETE with ALL imports, ALL components, ALL state management — NO placeholders, NO "// ... rest of code"
+- Use functional components with hooks for React
+- Add proper error boundaries and loading states
+- Ensure all imports resolve (check package.json for deps)
 
-Write REAL, RUNNABLE React/HTML code with proper imports.`;
+Output format for EACH file:
+=== FILENAME: path/to/file.ext ===
+[complete file content here]
+
+Write all files now. Start with ${frontendFiles[0]}:`;
 
     try {
-      const response = await llm(prompt, 'You are an expert frontend developer.');
+      const response = await llm(prompt, 'You are an expert frontend developer. Generate complete, production-ready code. Do NOT skip any file or include placeholders.');
       const parsed = parseCodeBlocks(response);
       files.push(...parsed);
     } catch (e: any) {
