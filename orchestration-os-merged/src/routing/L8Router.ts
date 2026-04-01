@@ -7,14 +7,15 @@ export interface LLMConfig {
   baseURL?: string;
   maxTokens?: number;
   temperature?: number;
+  maxCostPer1K?: number;
 }
 
 export interface RoutingRule {
   pattern: RegExp;
   provider: LLMProvider;
   model: string;
-  maxCostPer1K?: number; // USD
-  latencyTarget?: number; // ms
+  maxCostPer1K?: number;
+  latencyTarget?: number;
   contextWindow?: number;
   priority: number;
 }
@@ -35,14 +36,13 @@ export class L8Router {
 
   constructor(
     private apiKeys: Record<string, string>,
-    private预算模式: 'cost' | 'latency' | 'quality' = 'cost'
+    private budgetMode: 'cost' | 'latency' | 'quality' = 'cost'
   ) {
     this.initProviderConfigs();
     this.initDefaultRules();
   }
 
   private initProviderConfigs() {
-    // Groq - cheapest, fastest
     this.providerConfigs.set('groq', {
       provider: 'groq',
       model: 'llama-3.3-70b-versatile',
@@ -50,7 +50,6 @@ export class L8Router {
       maxCostPer1K: 0.0012,
     });
 
-    // Cerebras - fast
     this.providerConfigs.set('cerebras', {
       provider: 'cerebras',
       model: 'cerebras/llama-3.3-70b',
@@ -58,21 +57,18 @@ export class L8Router {
       maxCostPer1K: 0.0012,
     });
 
-    // OpenAI
     this.providerConfigs.set('openai', {
       provider: 'openai',
       model: 'gpt-4o-mini',
       maxCostPer1K: 0.00015,
     });
 
-    // Anthropic
     this.providerConfigs.set('anthropic', {
       provider: 'anthropic',
       model: 'claude-3-5-haiku-20241022',
       maxCostPer1K: 0.0008,
     });
 
-    // Ollama (local)
     this.providerConfigs.set('ollama', {
       provider: 'ollama',
       model: 'llama3.2',
@@ -82,7 +78,6 @@ export class L8Router {
   }
 
   private initDefaultRules() {
-    // Priority 1: Code completion - use Groq (fastest/cheapest)
     this.rules.push({
       pattern: /^`{3}(\w+)?|^\s*(function|class|const|let|var|import|export|def |fn |pub |async)/m,
       provider: 'groq',
@@ -91,7 +86,6 @@ export class L8Router {
       latencyTarget: 500,
     });
 
-    // Priority 2: Simple Q&A - use Cerebras
     this.rules.push({
       pattern: /^(what|who|when|where|why|how)\s/i,
       provider: 'cerebras',
@@ -100,7 +94,6 @@ export class L8Router {
       contextWindow: 4096,
     });
 
-    // Priority 3: Agents/skills - use Groq
     this.rules.push({
       pattern: /(agent|skill|tool|execute|run|orchestrat)/i,
       provider: 'groq',
@@ -108,7 +101,6 @@ export class L8Router {
       priority: 3,
     });
 
-    // Priority 4: Heavy reasoning - use OpenAI
     this.rules.push({
       pattern: /(analyze|reason|think|plan|strategy|research)/i,
       provider: 'openai',
@@ -117,7 +109,6 @@ export class L8Router {
       latencyTarget: 5000,
     });
 
-    // Priority 5: Code review/refactor - use Anthropic
     this.rules.push({
       pattern: /(review|refactor|improve|optimize|fix|debug)/i,
       provider: 'anthropic',
@@ -125,7 +116,6 @@ export class L8Router {
       priority: 5,
     });
 
-    // Sort by priority
     this.rules.sort((a, b) => a.priority - b.priority);
   }
 
@@ -147,13 +137,11 @@ export class L8Router {
         };
       }
     }
-
-    // Fallback to budget mode selection
     return this.fallback();
   }
 
   private fallback(): RoutingDecision {
-    switch (this.预算模式) {
+    switch (this.budgetMode) {
       case 'cost':
         return {
           provider: 'groq',
@@ -186,13 +174,10 @@ export class L8Router {
     tryProviders: LLMProvider[] = ['groq', 'cerebras', 'openai']
   ): Promise<RoutingDecision> {
     const primary = await this.route(prompt);
-
     try {
-      // Test primary with a quick health check
       await this.healthCheck(primary.provider);
       return primary;
     } catch {
-      // Fallback through list
       for (const provider of tryProviders) {
         if (provider === primary.provider) continue;
         const config = this.providerConfigs.get(provider);
@@ -211,8 +196,6 @@ export class L8Router {
           }
         }
       }
-
-      // Ultimate fallback
       return {
         provider: this.fallbackProvider,
         model: this.fallbackModel,
@@ -226,15 +209,11 @@ export class L8Router {
   private async healthCheck(provider: LLMProvider): Promise<boolean> {
     const config = this.providerConfigs.get(provider);
     if (!config) throw new Error(`Unknown provider: ${provider}`);
-
-    // For local providers, check if service is running
     if (provider === 'ollama') {
       const response = await fetch('http://localhost:11434/api/tags');
-      return response.ok;
+      if (!response.ok) throw new Error(`Ollama health check failed: ${response.status}`);
+      return true;
     }
-
-    // For API providers, check with a minimal request
-    // This is a stub - actual implementation would make a real request
     return true;
   }
 
@@ -246,7 +225,7 @@ export class L8Router {
         model: val.model,
         costPer1K: val.maxCostPer1K,
       })),
-      budgetMode: this.预算模式,
+      budgetMode: this.budgetMode,
     };
   }
 }

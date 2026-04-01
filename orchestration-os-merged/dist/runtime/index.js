@@ -1,100 +1,72 @@
-// Phase 1/10 — Multi-Runtime Executor (L1)
+// Phase 1 — Runtime Manager (executes code in Python, Node, Bash, etc.)
 import { spawn } from 'child_process';
-import { writeFileSync, unlinkSync, mkdirSync } from 'fs';
-import { join } from 'path';
-function execCmd(cmd, args, cwd) {
+const runtimes = {
+    python3: { name: 'python3', version: '', available: false, command: 'python3' },
+    node: { name: 'node', version: '', available: false, command: 'node' },
+    bash: { name: 'bash', version: '', available: false, command: 'bash' },
+    deno: { name: 'deno', version: '', available: false, command: 'deno' },
+    bun: { name: 'bun', version: '', available: false, command: 'bun' },
+    ruby: { name: 'ruby', version: '', available: false, command: 'ruby' },
+    go: { name: 'go', version: '', available: false, command: 'go' },
+    rustc: { name: 'rustc', version: '', available: false, command: 'rustc' },
+    java: { name: 'java', version: '', available: false, command: 'java' },
+};
+function execPromise(cmd, args) {
     return new Promise((resolve) => {
-        const start = Date.now();
-        const proc = spawn(cmd, args, { cwd: cwd || '/tmp', shell: false });
+        const proc = spawn(cmd, args);
         let stdout = '', stderr = '';
-        proc.stdout?.on('data', d => { stdout += d.toString(); });
-        proc.stderr?.on('data', d => { stderr += d.toString(); });
-        proc.on('close', code => {
-            resolve({ success: code === 0, stdout: stdout.trim(), stderr: stderr.trim(), exitCode: code || 0, durationMs: Date.now() - start });
-        });
-        proc.on('error', e => {
-            resolve({ success: false, stdout, stderr: e.message, exitCode: 1, durationMs: Date.now() - start });
-        });
+        proc.stdout?.on('data', d => stdout += d.toString());
+        proc.stderr?.on('data', d => stderr += d.toString());
+        proc.on('close', code => resolve({ stdout, stderr, exitCode: code || 0 }));
+        proc.on('error', () => resolve({ stdout, stderr, exitCode: 1 }));
     });
 }
-const runtimes = {
-    python: {
-        id: 'python', name: 'Python 3', extensions: ['.py'],
-        executor: (code, cwd) => execCmd('python3', ['-c', code], cwd),
-    },
-    node: {
-        id: 'node', name: 'Node.js', extensions: ['.js', '.mjs'],
-        executor: (code, cwd) => execCmd('node', ['--input-type=module', '-e', code], cwd),
-    },
-    bash: {
-        id: 'bash', name: 'Bash', extensions: ['.sh', '.bash'],
-        executor: (code, cwd) => execCmd('bash', ['-c', code], cwd),
-    },
-    deno: {
-        id: 'deno', name: 'Deno', extensions: ['.ts', '.js'],
-        executor: (code, cwd) => execCmd('deno', ['eval', code], cwd),
-    },
-    bun: {
-        id: 'bun', name: 'Bun', extensions: ['.ts', '.js'],
-        executor: (code, cwd) => execCmd('bun', ['-e', code], cwd),
-    },
-};
-export async function executeFromFile(runtimeId, filePath, cwd) {
-    const runtime = runtimes[runtimeId];
-    if (!runtime)
-        throw new Error(`Unknown runtime: ${runtimeId}`);
-    let cmd, args;
-    switch (runtimeId) {
-        case 'python':
-            cmd = 'python3';
-            args = [filePath];
-            break;
-        case 'node':
-            cmd = 'node';
-            args = [filePath];
-            break;
-        case 'bash':
-            cmd = 'bash';
-            args = [filePath];
-            break;
-        case 'deno':
-            cmd = 'deno';
-            args = ['run', filePath];
-            break;
-        case 'bun':
-            cmd = 'bun';
-            args = [filePath];
-            break;
-        default:
-            cmd = 'node';
-            args = [filePath];
-            break;
-    }
-    return execCmd(cmd, args, cwd);
+async function detectRuntimes() {
+    const checks = [
+        { key: 'python3', args: ['--version'] },
+        { key: 'node', args: ['--version'] },
+        { key: 'bash', args: ['--version'] },
+        { key: 'deno', args: ['--version'] },
+        { key: 'bun', args: ['--version'] },
+        { key: 'ruby', args: ['--version'] },
+        { key: 'go', args: ['version'] },
+        { key: 'rustc', args: ['--version'] },
+        { key: 'java', args: ['-version'] },
+    ];
+    const results = await Promise.allSettled(checks.map(async ({ key, args }) => {
+        const info = runtimes[key];
+        const result = await execPromise(info.command, args);
+        if (result.exitCode === 0) {
+            const version = result.stdout.trim().split('\n')[0] || result.stderr.trim().split('\n')[0] || 'unknown';
+            runtimes[key] = { ...info, version: version.slice(0, 50), available: true };
+        }
+    }));
 }
-export async function executeCode(code, runtimeId, cwd) {
-    const runtime = runtimes[runtimeId];
-    if (!runtime)
-        throw new Error(`Unknown runtime: ${runtimeId}`);
-    const ext = runtime.extensions[0] || '.txt';
-    const tmpDir = '/tmp/zo-runtime';
-    mkdirSync(tmpDir, { recursive: true });
-    const tmpFile = join(tmpDir, `zo-${Date.now()}${ext}`);
+detectRuntimes();
+export function listRuntimes() {
+    return Object.values(runtimes);
+}
+export async function executeCode(code, runtimeName) {
+    const info = runtimes[runtimeName];
+    if (!info)
+        throw new Error(`Runtime ${runtimeName} not known`);
+    if (!info.available)
+        throw new Error(`Runtime ${runtimeName} not available`);
+    const { writeFileSync } = await import('fs');
+    const ext = { python3: 'py', node: 'js', bash: 'sh', deno: 'ts', bun: 'ts', ruby: 'rb', go: 'go', rustc: 'rs', java: 'java' };
+    const tmpFile = `/tmp/zo-exec-${Date.now()}.${ext[runtimeName] || 'txt'}`;
     writeFileSync(tmpFile, code);
-    const result = await executeFromFile(runtimeId, tmpFile, cwd);
-    try {
-        unlinkSync(tmpFile);
+    const start = Date.now();
+    let args = [tmpFile];
+    // Java needs special handling
+    if (runtimeName === 'java') {
+        const className = code.match(/public class (\w+)/)?.[1] || 'Main';
+        const baseDir = '/tmp';
+        writeFileSync(`${baseDir}/${className}.java`, code);
+        await execPromise('javac', [`${baseDir}/${className}.java`]);
+        args = ['-cp', baseDir, className];
     }
-    catch { /* ignore */ }
-    return result;
+    const result = await execPromise(info.command, args);
+    return { ...result, duration: Date.now() - start };
 }
-export function detectRuntime(filePath) {
-    for (const rt of Object.values(runtimes)) {
-        if (rt.extensions.some(ext => filePath.endsWith(ext)))
-            return rt;
-    }
-    return undefined;
-}
-export function listRuntimes() { return Object.values(runtimes); }
-export function getRuntime(id) { return runtimes[id]; }
 export { runtimes };

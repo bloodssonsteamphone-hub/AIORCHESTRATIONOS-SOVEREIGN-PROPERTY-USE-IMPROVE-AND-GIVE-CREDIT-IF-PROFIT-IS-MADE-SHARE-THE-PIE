@@ -1,284 +1,299 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Zo Orchestration Dashboard</title>
-<style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#fff}
-.header{border-bottom:1px solid #1a1a1a;padding:16px 24px;display:flex;align-items:center;justify-content:space-between}
-.header h1{font-size:18px;font-weight:700}
-.header p{font-size:11px;color:#666;font-family:monospace;margin-top:2px}
-.header-right{display:flex;gap:8px;align-items:center}
-.tabs{display:flex;gap:4px}
-.tab{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:none;background:#1a1a1a;color:#888;transition:all .15s}
-.tab.active{background:#2563eb;color:#fff}
-.tab:hover:not(.active){background:#222;color:#ccc}
-.btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;border:1px solid #333;background:#1a1a1a;color:#888}
-.btn:hover{background:#222}
-.main{padding:24px;max-width:1400px;margin:0 auto}
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
-.stat{background:#111;border:1px solid #1a1a1a;border-radius:10px;padding:20px}
-.stat-label{font-size:10px;color:#555;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-.stat-value{font-size:32px;font-weight:700;font-family:monospace}
-.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-.card{background:#111;border:1px solid #1a1a1a;border-radius:10px;padding:20px}
-.card-title{font-size:12px;color:#888;font-weight:600;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em}
-textarea{width:100%;background:#0d0d0d;border:1px solid #2a2a2a;border-radius:8px;padding:12px;color:#fff;font-family:monospace;font-size:12px;resize:none;outline:none}
-textarea:focus{border-color:#2563eb}
-.build-btn{margin-top:10px;padding:8px 18px;background:#2563eb;color:#fff;border:none;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer}
-.build-btn:hover{background:#1d4ed8}
-.build-btn:disabled{background:#333;color:#666;cursor:not-allowed}
-.build-item{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a1a1a}
-.build-item:last-child{border-bottom:none}
-.badge{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:600;font-family:monospace;text-transform:uppercase}
-.badge-success{background:#052e16;color:#4ade80;border:1px solid #166534}
-.badge-failed{background:#2c0b0e;color:#f87171;border:1px solid #991b1b}
-.badge-running{background:#0c1829;color:#60a5fa;border:1px solid #1e40af}
-.badge-pending{background:#1c1407;color:#fbbf24;border:1px solid #92400e}
-.badge-idle{background:#18181b;color:#71717a;border:1px solid #3f3f46}
-.build-id{font-family:monospace;font-size:11px;color:#555;width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.build-prompt{font-size:11px;color:#aaa;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.build-files{font-size:10px;color:#555}
-.tool-row{display:flex;align-items:center;gap:10px;padding:5px 0}
-.tool-name{font-family:monospace;font-size:11px;color:#ccc;width:130px;overflow:hidden;text-overflow:ellipsis}
-.tool-bar-wrap{flex:1;background:#1a1a1a;border-radius:999px;height:6px;overflow:hidden}
-.tool-bar{height:100%;background:#2563eb;border-radius:999px}
-.tool-count{font-size:10px;color:#555;width:50px;text-align:right}
-.tool-rate{font-size:10px;width:45px;text-align:right}
-.rate-green{color:#4ade80}.rate-yellow{color:#fbbf24}.rate-red{color:#f87171}
-.wf-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1a1a1a}
-.wf-row:last-child{border-bottom:none}
-.wf-name{font-family:monospace;font-size:12px;color:#ccc;flex:1}
-.wf-run{padding:4px 12px;background:#15803d;color:#fff;border:none;border-radius:5px;font-size:11px;cursor:pointer}
-.wf-run:hover{background:#166534}
-.wf-run:disabled{background:#333;color:#666;cursor:not-allowed}
-.routing-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.routing-label{font-size:11px;color:#555;width:60px}
-select{background:#0d0d0d;border:1px solid #2a2a2a;border-radius:6px;padding:6px 10px;color:#fff;font-size:12px;outline:none}
-select:focus{border-color:#2563eb}
-.apply-btn{margin-top:10px;padding:6px 14px;background:#7c3aed;color:#fff;border:none;border-radius:6px;font-size:12px;cursor:pointer}
-.apply-btn:hover{background:#6d28d9}
-pre{background:#0d0d0d;border:1px solid #1a1a1a;border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:#555;overflow:auto;max-height:200px}
-.empty{font-size:12px;color:#444;padding:10px 0}
-.section-title{font-size:12px;color:#888;font-weight:600;margin-bottom:14px;text-transform:uppercase;letter-spacing:.05em}
-@media(max-width:900px){.stats{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zo Orchestration OS — Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; }
+    .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+    h1 { color: #00d4ff; font-size: 2em; margin-bottom: 5px; }
+    .subtitle { color: #666; margin-bottom: 30px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .card { background: #111118; border: 1px solid #222; border-radius: 12px; padding: 20px; }
+    .card h3 { color: #00d4ff; margin-bottom: 15px; font-size: 0.9em; text-transform: uppercase; letter-spacing: 1px; }
+    .metric { font-size: 2em; font-weight: bold; color: #fff; }
+    .metric-label { color: #666; font-size: 0.8em; }
+    .status-ok { color: #00ff88; }
+    .status-warn { color: #ffaa00; }
+    .status-err { color: #ff4444; }
+    .build-form { background: #111118; border: 1px solid #222; border-radius: 12px; padding: 20px; margin-bottom: 30px; }
+    .build-form textarea { width: 100%; background: #0a0a0f; border: 1px solid #333; border-radius: 8px; color: #e0e0e0; padding: 12px; font-size: 14px; min-height: 80px; resize: vertical; font-family: inherit; }
+    .build-form button { background: #00d4ff; color: #000; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+    .build-form button:hover { background: #00bbee; }
+    .builds { background: #111118; border: 1px solid #222; border-radius: 12px; padding: 20px; }
+    .build-item { padding: 12px; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; }
+    .build-item:last-child { border-bottom: none; }
+    .build-prompt { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 15px; }
+    .build-status { padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: bold; }
+    .status-success { background: #003322; color: #00ff88; }
+    .status-running { background: #332200; color: #ffaa00; }
+    .status-failed { background: #330011; color: #ff4444; }
+    .status-pending { background: #111; color: #666; }
+    .api-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+    .api-item { background: #0a0a0f; padding: 10px; border-radius: 6px; font-family: monospace; font-size: 0.85em; color: #00d4ff; }
+    .api-item span { color: #666; }
+    .tools-list { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tool-tag { background: #1a1a24; padding: 4px 10px; border-radius: 12px; font-size: 0.75em; color: #aaa; border: 1px solid #333; }
+    .refresh { background: #222; color: #888; border: 1px solid #333; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8em; }
+    .refresh:hover { background: #333; color: #fff; }
+    .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    nav { margin-bottom: 30px; }
+    nav a { color: #666; text-decoration: none; margin-right: 20px; font-size: 0.9em; }
+    nav a:hover { color: #00d4ff; }
+    nav a.active { color: #00d4ff; border-bottom: 2px solid #00d4ff; padding-bottom: 2px; }
+    .workflows { margin-top: 10px; }
+    .workflow-item { background: #0a0a0f; padding: 12px; border-radius: 8px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .workflow-name { font-weight: bold; color: #e0e0e0; }
+    .workflow-desc { color: #666; font-size: 0.8em; margin-top: 4px; }
+    .workflow-actions { display: flex; gap: 8px; }
+    .workflow-actions button { background: #1a1a24; border: 1px solid #333; color: #00d4ff; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; }
+    .workflow-actions button:hover { background: #222; }
+  </style>
 </head>
 <body>
-<div class="header">
-  <div><h1>Zo Orchestration OS</h1><p id="version">v3.0.0 &middot; uptime &mdash;</p></div>
-  <div class="header-right">
-    <div class="tabs">
-      <button class="tab active" data-tab="build">Build</button>
-      <button class="tab" data-tab="tools">Tools</button>
-      <button class="tab" data-tab="workflows">Workflows</button>
-      <button class="tab" data-tab="routing">LLM Routing</button>
-    </div>
-    <button class="btn" id="refreshBtn">&#8635; Refresh</button>
-  </div>
-</div>
-<div class="main">
-  <div class="stats">
-    <div class="stat"><div class="stat-label">Total Builds</div><div class="stat-value" id="stat-builds">&mdash;</div></div>
-    <div class="stat"><div class="stat-label">Success Rate</div><div class="stat-value" id="stat-rate">&mdash;</div></div>
-    <div class="stat"><div class="stat-label">Avg Files/Build</div><div class="stat-value" id="stat-files">&mdash;</div></div>
-  </div>
-  <div id="tab-build">
-    <div class="grid-2">
-      <div class="card"><div class="section-title">New Build</div>
-        <textarea id="promptInput" rows="4" placeholder="Build a fullstack React todo app with a FastAPI backend..."></textarea>
-        <button class="build-btn" id="buildBtn">&#x1F680; Build App</button>
-        <div id="buildStatus" style="margin-top:10px;font-size:12px;color:#555;"></div>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>Zo Orchestration OS</h1>
+        <p class="subtitle">Sovereign Polyglot Multimodal App-Builder</p>
       </div>
-      <div class="card"><div class="section-title">Recent Builds</div>
-        <div id="recentBuilds"><div class="empty">No builds yet</div></div>
+      <button class="refresh" onclick="refreshAll()">↻ Refresh</button>
+    </div>
+
+    <nav>
+      <a href="#" class="active" data-tab="dashboard">Dashboard</a>
+      <a href="#" data-tab="build">Build</a>
+      <a href="#" data-tab="workflows">Workflows</a>
+      <a href="#" data-tab="tools">Tools</a>
+    </nav>
+
+    <div id="tab-dashboard">
+      <div class="grid">
+        <div class="card">
+          <h3>System</h3>
+          <div id="health-status">Loading...</div>
+        </div>
+        <div class="card">
+          <h3>Builds</h3>
+          <div id="build-stats">Loading...</div>
+        </div>
+        <div class="card">
+          <h3>LLM Routing</h3>
+          <div id="llm-status">Loading...</div>
+        </div>
+        <div class="card">
+          <h3>Workflows</h3>
+          <div id="workflow-count">Loading...</div>
+        </div>
+      </div>
+
+      <div class="builds">
+        <h3 style="color:#00d4ff;margin-bottom:15px;">Recent Builds</h3>
+        <div id="recent-builds">Loading...</div>
+      </div>
+    </div>
+
+    <div id="tab-build" style="display:none;">
+      <div class="build-form">
+        <h3 style="color:#00d4ff;margin-bottom:15px;">Build an App</h3>
+        <textarea id="build-prompt" placeholder="Describe the app you want to build... e.g. &#10;&#10;A React todo app with Python Flask backend and SQLite database"></textarea>
+        <button onclick="startBuild()">🚀 Build App</button>
+      </div>
+      <div class="builds">
+        <h3 style="color:#00d4ff;margin-bottom:15px;">Build Sessions</h3>
+        <div id="all-builds">Loading...</div>
+      </div>
+    </div>
+
+    <div id="tab-workflows" style="display:none;">
+      <div class="builds">
+        <h3 style="color:#00d4ff;margin-bottom:15px;">Available Workflows</h3>
+        <div id="workflow-list" class="workflows">Loading...</div>
+      </div>
+    </div>
+
+    <div id="tab-tools" style="display:none;">
+      <div class="grid">
+        <div class="card">
+          <h3>Tools Registry</h3>
+          <div id="tools-count">Loading...</div>
+        </div>
+      </div>
+      <div class="builds">
+        <h3 style="color:#00d4ff;margin-bottom:15px;">All Tools</h3>
+        <div id="tools-list" class="tools-list">Loading...</div>
       </div>
     </div>
   </div>
-  <div id="tab-tools" style="display:none">
-    <div class="card"><div class="section-title">Tool Performance</div>
-      <div id="toolList"><div class="empty">No tool data</div></div>
-    </div>
-  </div>
-  <div id="tab-workflows" style="display:none">
-    <div class="card"><div class="section-title">Workflows</div>
-      <div id="workflowList"><div class="empty">Loading...</div></div>
-      <div id="wfResult" style="margin-top:12px"></div>
-    </div>
-  </div>
-  <div id="tab-routing" style="display:none">
-    <div class="card"><div class="section-title">LLM Routing</div>
-      <div id="routingInfo" style="margin-bottom:14px;font-size:12px;color:#555;"></div>
-      <div class="routing-row"><span class="routing-label">Tier</span>
-        <select id="tierSelect">
-          <option value="local-free">local-free (Ollama)</option>
-          <option value="cloud-free">cloud-free (Groq/OpenRouter)</option>
-          <option value="paid-explicit-only">paid-explicit-only</option>
-        </select>
-      </div>
-      <div class="routing-row"><span class="routing-label">Strategy</span>
-        <select id="strategySelect">
-          <option value="sequential">sequential</option>
-          <option value="consensus">consensus (fan-out)</option>
-          <option value="champion-challenger">champion-challenger</option>
-          <option value="specialist-routing">specialist-routing</option>
-        </select>
-      </div>
-      <button class="apply-btn" id="applyRouting">Apply Routing</button>
-      <div id="routingStatus" style="margin-top:10px;font-size:12px;color:#555;"></div>
-    </div>
-  </div>
-  <div class="card" style="margin-top:16px"><div class="section-title">Orchestrator Health</div>
-    <pre id="healthDump">Loading...</pre>
-  </div>
-</div>
-<script>
-const API = 'http://localhost:3000';
 
-function fmtUptime(s) {
-  if (!s) return '—';
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
-  return h + 'h ' + m + 'm ' + sec + 's';
-}
+  <script>
+    const API = '';
+    let builds = [];
 
-function badge(status) {
-  const map = { success: 'badge-success', failed: 'badge-failed', running: 'badge-running', pending: 'badge-pending', idle: 'badge-idle' };
-  return '<span class="badge ' + (map[status] || 'badge-idle') + '">' + status + '</span>';
-}
+    async function refreshAll() {
+      await Promise.all([
+        refreshHealth(),
+        refreshLLM(),
+        refreshWorkflows(),
+        refreshTools(),
+        refreshBuilds()
+      ]);
+    }
 
-async function loadAll() {
-  const [dash, health, llm] = await Promise.all([
-    fetch(API + '/api/dashboard').then(r => r.json()).catch(() => ({})),
-    fetch(API + '/api/health').then(r => r.json()).catch(() => ({})),
-    fetch(API + '/api/llm/providers').then(r => r.json()).catch(() => ({}))
-  ]);
+    async function refreshHealth() {
+      try {
+        const r = await fetch('/api/health');
+        const d = await r.json();
+        const layers = Object.entries(d.layers || {}).map(([k, v]) =>
+          `<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:0.85em;">
+            <span style="color:#888;">${k}</span>
+            <span class="${(v.status||v.note)?.includes('partial')||(v.note)?.includes('not')||(v.note)?.includes('Desktop') ? 'status-warn' : 'status-ok'}">${v.status || v.note || 'ok'}</span>
+          </div>`
+        ).join('');
+        document.getElementById('health-status').innerHTML =
+          `<div style="margin-bottom:8px;"><span class="status-ok">● Online</span> v${d.version}</div>
+           <div style="margin-bottom:8px;">Uptime: ${Math.floor(d.uptime||0)}s</div>
+           <div style="margin-top:10px;">${layers}</div>`;
 
-  document.getElementById('stat-builds').textContent = dash.totalBuilds ?? '—';
-  const rate = dash.successRate ? (dash.successRate * 100).toFixed(1) + '%' : '—';
-  const rateEl = document.getElementById('stat-rate');
-  rateEl.textContent = rate;
-  if (dash.successRate > 0.7) rateEl.style.color = '#4ade80';
-  else if (dash.successRate > 0.4) rateEl.style.color = '#fbbf24';
-  else if (dash.successRate > 0) rateEl.style.color = '#f87171';
-  document.getElementById('stat-files').textContent = dash.avgFiles ? dash.avgFiles.toFixed(1) : '—';
-  document.getElementById('version').textContent = 'v' + (health.version || '3.0.0') + ' \u00b7 uptime ' + fmtUptime(health.uptime);
+        const tools = d.layers?.L3?.tools || 0;
+        const workflows = d.layers?.L4?.workflows || 0;
+        document.getElementById('build-stats').innerHTML =
+          `<div class="metric">${d.uptime ? Math.floor(d.uptime) : 0}s</div>
+           <div class="metric-label">System Uptime</div>
+           <div style="margin-top:10px;font-size:0.85em;color:#888;">${tools} tools · ${workflows} workflows</div>`;
 
-  const builds = dash.recentBuilds || [];
-  document.getElementById('recentBuilds').innerHTML = builds.length === 0
-    ? '<div class="empty">No builds yet</div>'
-    : builds.map(function(b) {
-      return '<div class="build-item">' + badge(b.status) + '<span class="build-id">' + b.id + '</span><span class="build-prompt">' + b.prompt + '</span><span class="build-files">' + b.files + 'f</span></div>';
-    }).join('');
+        document.getElementById('workflow-count').innerHTML =
+          `<div class="metric">${workflows}</div>
+           <div class="metric-label">Active Workflows</div>`;
+      } catch (e) {
+        document.getElementById('health-status').innerHTML = '<span class="status-err">● Offline</span>';
+      }
+    }
 
-  const tools = dash.tools || [];
-  document.getElementById('toolList').innerHTML = tools.length === 0
-    ? '<div class="empty">No tool invocations yet</div>'
-    : tools.sort(function(a, b) { return b.invocations - a.invocations; }).map(function(t) {
-      var w = Math.min(100, t.invocations * 2);
-      var cls = t.successRate > 0.8 ? 'rate-green' : t.successRate > 0.5 ? 'rate-yellow' : 'rate-red';
-      return '<div class="tool-row"><span class="tool-name">' + t.name + '</span><div class="tool-bar-wrap"><div class="tool-bar" style="width:' + w + '%"></div></div><span class="tool-count">' + t.invocations + 'x</span><span class="tool-rate ' + cls + '">' + (t.successRate * 100).toFixed(0) + '%</span></div>';
-    }).join('');
+    async function refreshLLM() {
+      try {
+        const r = await fetch('/api/llm/providers');
+        const d = await r.json();
+        document.getElementById('llm-status').innerHTML =
+          `<div style="font-size:0.9em;margin-bottom:8px;">
+            <span style="color:#888;">Tier:</span> <span class="status-ok">${d.policy?.global || 'unknown'}</span>
+           </div>
+           <div style="font-size:0.9em;margin-bottom:8px;">
+            <span style="color:#888;">Strategy:</span> ${d.policy?.federation?.strategy || 'sequential'}
+           </div>
+           <div style="font-size:0.8em;color:#666;margin-top:8px;">
+            ${(d.allProviders||[]).map(p => `<span style="margin-right:8px;">${p}</span>`).join('')}
+           </div>`;
+      } catch (e) {
+        document.getElementById('llm-status').innerHTML = '<span class="status-warn">Not available</span>';
+      }
+    }
 
-  if (llm.policy) {
-    document.getElementById('tierSelect').value = llm.policy.global || 'cloud-free';
-    if (llm.policy.federation) document.getElementById('strategySelect').value = llm.policy.federation.strategy || 'sequential';
-    var agents = Object.entries(llm.policy.perAgent || {}).map(function(e) { return e[0] + ': ' + e[1]; }).join(', ');
-    document.getElementById('routingInfo').textContent = 'Global: ' + llm.policy.global + ' | Per-agent: ' + (agents || 'none');
-  }
+    async function refreshWorkflows() {
+      try {
+        const r = await fetch('/api/workflows');
+        const d = await r.json();
+        document.getElementById('workflow-list').innerHTML = (d.workflows||[]).map(w => `
+          <div class="workflow-item">
+            <div>
+              <div class="workflow-name">${w.name}</div>
+              <div class="workflow-desc">${w.id}</div>
+            </div>
+            <div class="workflow-actions">
+              <button onclick="runWorkflow('${w.id}')">▶ Run</button>
+            </div>
+          </div>
+        `).join('') || '<div style="color:#666;">No workflows available</div>';
+      } catch (e) {
+        document.getElementById('workflow-list').innerHTML = '<span class="status-err">Failed to load</span>';
+      }
+    }
 
-  document.getElementById('healthDump').textContent = JSON.stringify(health, null, 2);
-}
+    async function runWorkflow(id) {
+      try {
+        const r = await fetch(`/api/workflows/${id}/run`, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) });
+        const d = await r.json();
+        alert(`Workflow ${id}: ${d.status || 'started'}`);
+        refreshWorkflows();
+      } catch (e) {
+        alert('Failed to run workflow: ' + e.message);
+      }
+    }
 
-async function loadWorkflows() {
-  var res = await fetch(API + '/api/workflows').catch(function() { return null; });
-  if (!res) return;
-  var data = await res.json();
-  var wfs = data.workflows || [];
-  document.getElementById('workflowList').innerHTML = wfs.length === 0
-    ? '<div class="empty">No workflows registered</div>'
-    : wfs.map(function(w) {
-      return '<div class="wf-row">' + badge(w.status) + '<span class="wf-name">' + w.name + '</span><button class="wf-run" data-wfid="' + w.id + '">Run</button></div>';
-    }).join('');
-}
+    async function refreshTools() {
+      try {
+        const r = await fetch('/api/tools');
+        const d = await r.json();
+        document.getElementById('tools-count').innerHTML =
+          `<div class="metric">${d.total || 0}</div><div class="metric-label">Registered Tools</div>`;
+        document.getElementById('tools-list').innerHTML = (d.tools||[]).map(t =>
+          `<span class="tool-tag" title="${t.description || ''}">${t.name}</span>`
+        ).join('') || '<span style="color:#666;">No tools registered</span>';
+      } catch (e) {
+        document.getElementById('tools-list').innerHTML = '<span class="status-err">Failed to load</span>';
+      }
+    }
 
-async function runWf(id) {
-  var btn = event.target;
-  btn.disabled = true;
-  btn.textContent = 'Running...';
-  var res = await fetch(API + '/api/workflows/' + id + '/run', { method: 'POST' });
-  var data = await res.json().catch(function() { return {}; });
-  document.getElementById('wfResult').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
-  btn.disabled = false;
-  btn.textContent = 'Run';
-  loadAll();
-}
+    async function refreshBuilds() {
+      try {
+        const r = await fetch('/api/dashboard');
+        const d = await r.json();
+        const rate = ((d.successRate || 0) * 100).toFixed(0);
+        document.getElementById('recent-builds').innerHTML = (d.recentBuilds||[]).map(b => `
+          <div class="build-item">
+            <div class="build-prompt">${b.prompt || '—'}</div>
+            <span class="build-status status-${b.status}">${b.status}</span>
+          </div>
+        `).join('') || '<div style="color:#666;padding:12px;">No builds yet. Start with the form above.</div>';
+        document.getElementById('all-builds').innerHTML = (d.recentBuilds||[]).map(b => `
+          <div class="build-item">
+            <div>
+              <div class="build-prompt" style="font-size:0.9em;">${b.prompt || '—'}</div>
+              <div style="font-size:0.75em;color:#666;margin-top:4px;">${b.files || 0} files</div>
+            </div>
+            <span class="build-status status-${b.status}">${b.status}</span>
+          </div>
+        `).join('') || '<div style="color:#666;padding:12px;">No builds yet.</div>';
+      } catch (e) {
+        document.getElementById('recent-builds').innerHTML = '<span class="status-warn">Dashboard API not available. Is the server running?</span>';
+      }
+    }
 
-document.querySelectorAll('.tab').forEach(function(tab) {
-  tab.addEventListener('click', function() {
-    document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-    document.querySelectorAll('.tab-content, #tab-build, #tab-tools, #tab-workflows, #tab-routing').forEach(function(c) { c.style.display = 'none'; });
-    tab.classList.add('active');
-    var id = 'tab-' + tab.dataset.tab;
-    document.getElementById(id).style.display = 'block';
-    if (tab.dataset.tab === 'workflows') loadWorkflows();
-  });
-});
+    async function startBuild() {
+      const prompt = document.getElementById('build-prompt').value.trim();
+      if (!prompt) { alert('Please enter a prompt'); return; }
+      try {
+        const r = await fetch('/api/build', {
+          method: 'POST',
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify({ prompt, sessionId: 'session-' + Date.now() })
+        });
+        const d = await r.json();
+        alert('Build started: ' + d.sessionId);
+        document.getElementById('build-prompt').value = '';
+        refreshBuilds();
+      } catch (e) {
+        alert('Failed to start build: ' + e.message);
+      }
+    }
 
-document.getElementById('refreshBtn').addEventListener('click', loadAll);
-
-document.getElementById('buildBtn').addEventListener('click', async function() {
-  var input = document.getElementById('promptInput');
-  var prompt = input.value.trim();
-  if (!prompt) return;
-  this.disabled = true;
-  this.textContent = 'Building...';
-  document.getElementById('buildStatus').textContent = 'Starting build...';
-  try {
-    var res = await fetch(API + '/api/build', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: prompt })
+    // Tab navigation
+    document.querySelectorAll('nav a').forEach(a => {
+      a.addEventListener('click', e => {
+        e.preventDefault();
+        document.querySelectorAll('nav a').forEach(x => x.classList.remove('active'));
+        a.classList.add('active');
+        document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+        document.getElementById('tab-' + a.dataset.tab).style.display = 'block';
+        if (a.dataset.tab === 'build') refreshBuilds();
+        if (a.dataset.tab === 'workflows') refreshWorkflows();
+        if (a.dataset.tab === 'tools') refreshTools();
+      });
     });
-    var data = await res.json();
-    document.getElementById('buildStatus').innerHTML = 'Build started: <span style="color:#60a5fa;font-family:monospace">' + data.sessionId + '</span>';
-    input.value = '';
-    setTimeout(loadAll, 2000);
-  } catch(e) {
-    document.getElementById('buildStatus').textContent = 'Error: ' + e.message;
-  } finally {
-    this.disabled = false;
-    this.textContent = '\ud83d\ude80 Build App';
-  }
-});
 
-document.getElementById('applyRouting').addEventListener('click', async function() {
-  var tier = document.getElementById('tierSelect').value;
-  var strategy = document.getElementById('strategySelect').value;
-  document.getElementById('routingStatus').textContent = 'Applying...';
-  try {
-    var res = await fetch(API + '/api/llm/routing', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tier: tier, strategy: strategy })
-    });
-    var data = await res.json();
-    document.getElementById('routingStatus').innerHTML = '<span style="color:#4ade80">Applied:</span> ' + JSON.stringify(data.updated || data);
-    loadAll();
-  } catch(e) {
-    document.getElementById('routingStatus').textContent = 'Error: ' + e.message;
-  }
-});
-
-document.getElementById('workflowList').addEventListener('click', function(e) {
-  if (e.target.classList.contains('wf-run')) {
-    runWf(e.target.dataset.wfid);
-  }
-});
-
-loadAll();
-setInterval(loadAll, 15000);
-</script>
+    refreshAll();
+  </script>
 </body>
 </html>

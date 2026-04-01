@@ -1,3 +1,10 @@
+// Layer 4 — Workflow Engine (DAG + Triggers)
+import { exec } from 'child_process';
+import { writeFileSync, readFileSync } from 'fs';
+import { promisify } from 'util';
+
+const execAsync = promisify(exec);
+
 export type HookType = 'http' | 'mq' | 'fs' | 'cli' | 'timer';
 export type TriggerType = 'manual' | 'cron' | 'event' | 'webhook';
 
@@ -104,7 +111,7 @@ export class WorkflowEngine {
       runId: `run-${Date.now()}`,
       inputs,
       state: {},
-      results: new Map()
+      results: new Map(),
     };
 
     const executedSteps: ExecutedStep[] = [];
@@ -124,7 +131,7 @@ export class WorkflowEngine {
           executedSteps: dagResult.steps,
           failedStep: dagResult.failedStep,
           duration: Date.now() - start,
-          output: dagResult.output
+          output: dagResult.output,
         };
       }
 
@@ -141,7 +148,7 @@ export class WorkflowEngine {
             success: false,
             executedSteps,
             failedStep: result,
-            duration: Date.now() - start
+            duration: Date.now() - start,
           };
         }
       }
@@ -152,7 +159,7 @@ export class WorkflowEngine {
         workflow,
         success: true,
         executedSteps,
-        duration: Date.now() - start
+        duration: Date.now() - start,
       };
     } catch (err) {
       if (workflow.hooks?.onError) {
@@ -162,7 +169,7 @@ export class WorkflowEngine {
         workflow,
         success: false,
         executedSteps,
-        duration: Date.now() - start
+        duration: Date.now() - start,
       };
     }
   }
@@ -235,7 +242,7 @@ export class WorkflowEngine {
           success: true,
           output,
           duration: Date.now() - start,
-          retries
+          retries,
         };
       } catch (err) {
         if (retries < maxRetries) {
@@ -247,7 +254,7 @@ export class WorkflowEngine {
           success: false,
           error: err instanceof Error ? err.message : String(err),
           duration: Date.now() - start,
-          retries
+          retries,
         };
       }
     }
@@ -264,14 +271,15 @@ export class WorkflowEngine {
   private async executeHook(hook: WorkflowHook, context: ExecutionContext): Promise<void> {
     switch (hook.type) {
       case 'http':
-        await fetch(hook.config.url, { method: 'POST', body: JSON.stringify(context.state) });
+        await fetch(hook.config.url, {
+          method: 'POST',
+          body: JSON.stringify(context.state),
+        });
         break;
       case 'cli':
-        const { exec } = require('child_process');
-        await exec(hook.config.command);
+        await execAsync(hook.config.command);
         break;
       case 'fs':
-        const { writeFileSync, readFileSync } = require('fs');
         if (hook.config.write) {
           writeFileSync(hook.config.path, JSON.stringify(context.state));
         }
@@ -289,8 +297,7 @@ export class WorkflowEngine {
   private cronToMs(cron: string): number {
     const parts = cron.trim().split(/\s+/);
     if (parts.length < 5) return 60000;
-    const [min, hour, day, month, dow] = parts.map(Number);
-    return (min * 60 * 1000) || 60000;
+    return 60000;
   }
 
   reloadWorkflows(): void {

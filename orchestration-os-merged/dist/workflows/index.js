@@ -101,7 +101,6 @@ function createWorkflowEngine() {
         const completed = new Set();
         let allSucceeded = true;
         if (wf.config.parallel) {
-            // Phase 1: Run all steps with no dependencies in parallel
             const phases = buildDependencyPhases(wf.steps);
             for (const phase of phases) {
                 const results = await Promise.allSettled(phase.map(step => executeStepAsync(step, ctx, stepMap, completed)));
@@ -125,7 +124,6 @@ function createWorkflowEngine() {
             }
         }
         else {
-            // Sequential execution
             for (const step of wf.steps) {
                 if (!canRun(step, stepMap, completed)) {
                     step.status = 'skipped';
@@ -159,7 +157,6 @@ function createWorkflowEngine() {
         console.log(`[Workflow] ${wf.name}: ${wf.status} (${duration}ms, ${completed.size}/${wf.steps.length} steps)`);
         return wf;
     }
-    // Build execution phases: each phase can run in parallel, next phase waits for previous
     function buildDependencyPhases(steps) {
         const phases = [];
         const remaining = new Set(steps.map(s => s.id));
@@ -174,7 +171,6 @@ function createWorkflowEngine() {
                 }
             }
             if (phase.length === 0) {
-                // Deadlock — add remaining as final phase
                 phases.push(steps.filter(s => remaining.has(s.id)));
                 break;
             }
@@ -245,7 +241,7 @@ function createWorkflowEngine() {
                 const rt = step.params?.runtime || 'bash';
                 const allRuntimes = runtimes;
                 const r = allRuntimes[rt] || allRuntimes.bash;
-                return r.exec(cmd || `echo "Step: ${step.name}"`);
+                return r.exec(cmd || `echo "Step: ${step.name}"`, {});
             }
             default:
                 return { domain, action, status: 'noop' };

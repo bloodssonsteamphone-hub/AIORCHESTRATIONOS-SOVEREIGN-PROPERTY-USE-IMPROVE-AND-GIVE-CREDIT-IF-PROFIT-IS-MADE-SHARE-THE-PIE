@@ -1,3 +1,5 @@
+import { existsSync, readFileSync, writeFileSync } from 'fs';
+
 export interface Outcome {
   id: string;
   timestamp: number;
@@ -236,16 +238,26 @@ export class SelfEvolution {
         runtimes: this.runtimes,
         promptImprovements: this.promptImprovements.slice(-100),
       }, null, 2);
-      // For Node.js environment, would write to file
-      // fs.writeFileSync(this.storagePath, data);
-    } catch {}
+      writeFileSync(this.storagePath, data, 'utf-8');
+    } catch (e: any) {
+      console.warn(`[SelfEvolution] save failed: ${e.message}`);
+    }
   }
 
   private load(): void {
     try {
-      // For Node.js environment, would read from file
-      // if (fs.existsSync(this.storagePath)) { ... }
-    } catch {}
+      if (existsSync(this.storagePath)) {
+        const raw = readFileSync(this.storagePath, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (parsed.outcomes) this.outcomes = parsed.outcomes;
+        if (parsed.optimizations) this.optimizations = parsed.optimizations;
+        if (parsed.runtimes) this.runtimes = parsed.runtimes;
+        if (parsed.promptImprovements) this.promptImprovements = parsed.promptImprovements;
+        console.log(`[SelfEvolution] Loaded ${this.outcomes.length} outcomes from disk`);
+      }
+    } catch (e: any) {
+      console.warn(`[SelfEvolution] load failed: ${e.message}`);
+    }
   }
 }
 

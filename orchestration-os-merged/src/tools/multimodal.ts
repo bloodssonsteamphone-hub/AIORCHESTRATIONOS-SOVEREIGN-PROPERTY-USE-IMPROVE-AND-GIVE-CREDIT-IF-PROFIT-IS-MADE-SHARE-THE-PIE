@@ -103,7 +103,7 @@ export const imageEditTool = {
 export const audioTranscribeTool = {
   name: 'audio.transcribe',
   category: 'multimodal' as const,
-  description: 'Transcribe audio to text using Whisper via Ollama',
+  description: 'Transcribe audio to text using Whisper via Ollama (stub — Whisper model not available)',
   capabilities: ['transcribe', 'translate'],
   metrics: { invocations: 0, successes: 0, failures: 0, avgDuration: 0 },
   invoke: async (params: Record<string, unknown>) => {
@@ -111,13 +111,13 @@ export const audioTranscribeTool = {
     const { audioPath, language, model } = params as { audioPath?: string; language?: string; model?: string };
     if (!audioPath) throw new Error('audioPath required for audio.transcribe');
     try {
-      // Try Whisper via Ollama
+      // Try Whisper via Ollama (will fail — Whisper is not a text model in Ollama)
       const transcript = await callOllama(`Transcribe this audio file: ${audioPath}${language ? ` (language: ${language})` : ''}`, model || 'whisper');
       return { success: true, data: { audioPath, transcript, language: language || 'auto', model: model || 'whisper' }, duration: Date.now() - start };
     } catch (e: any) {
-      // Fallback: use ffmpeg to extract audio info
+      // Whisper unavailable — return failure with audio info as fallback
       const { stdout } = await execAsync('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', audioPath]);
-      return { success: true, data: { audioPath, note: 'Whisper unavailable', ffprobe: stdout, fallback: 'audio info extracted via ffprobe' }, duration: Date.now() - start };
+      return { success: false, error: `Whisper unavailable: ${e.message}. Audio info: ${stdout.slice(0, 200)}`, duration: Date.now() - start };
     }
   },
 };
@@ -185,6 +185,14 @@ export const videoExtractFramesTool = {
           const { stdout, exitCode, stderr } = await execAsync('ffprobe', ['-v', 'quiet', '-print_format', 'json', '-show_format', '-show_streams', videoPath]);
           if (exitCode !== 0) throw new Error(stderr || 'ffprobe failed');
           const info = JSON.parse(stdout);
+          // Safe FPS parsing — avoid eval()
+          const fps = (() => {
+            const fr = info.streams?.[0]?.r_frame_rate || '0';
+            const parts = fr.split('/');
+            return parts.length === 2 && parseInt(parts[1]) !== 0
+              ? parseInt(parts[0]) / parseInt(parts[1])
+              : parseFloat(fr);
+          })();
           return {
             success: true,
             data: {
@@ -192,7 +200,7 @@ export const videoExtractFramesTool = {
               size: info.format?.size,
               codec: info.streams?.[0]?.codec_name,
               resolution: `${info.streams?.[0]?.width}x${info.streams?.[0]?.height}`,
-              fps: eval(info.streams?.[0]?.r_frame_rate || '0'),
+              fps: fps,
             },
             duration: Date.now() - start,
           };

@@ -1,3 +1,7 @@
+// Layer 6 — Self-Diagnosis & Auto-Repair
+import { spawn } from 'child_process';
+import * as fs from 'fs';
+
 export type DiagnosticSeverity = 'critical' | 'warning' | 'info';
 
 export interface DiagnosticResult {
@@ -19,6 +23,17 @@ export interface RepairAction {
   autoRepair: boolean;
 }
 
+function execPromise(cmd: string, args: string[]): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+  return new Promise((resolve) => {
+    const proc = spawn(cmd, args);
+    let stdout = '', stderr = '';
+    proc.stdout?.on('data', d => stdout += d.toString());
+    proc.stderr?.on('data', d => stderr += d.toString());
+    proc.on('close', code => resolve({ stdout, stderr, exitCode: code || 0 }));
+    proc.on('error', e => resolve({ stdout, stderr, exitCode: 1 }));
+  });
+}
+
 export class SelfDiagnosis {
   private diagnostics: Map<string, () => Promise<DiagnosticResult>> = new Map();
   private repairScripts: Map<string, () => Promise<boolean>> = new Map();
@@ -29,20 +44,16 @@ export class SelfDiagnosis {
   }
 
   private registerDefaultDiagnostics() {
-    // GitHub Connection
+    // GitHub CLI
     this.register('github-connection', async () => {
       try {
-        const proc = await Deno.run({
-          cmd: ['gh', 'auth', 'status'],
-          stdout: 'piped',
-          stderr: 'piped',
-        }).output();
-        const output = new TextDecoder().decode(proc);
+        const { exitCode, stdout } = await execPromise('gh', ['auth', 'status']);
+        const output = stdout;
         return {
           id: 'github-connection',
           name: 'GitHub Authentication',
           severity: 'critical',
-          status: output.includes('Logged in') ? 'pass' : 'fail',
+          status: exitCode === 0 && output.includes('Logged in') ? 'pass' : 'fail',
           message: output.includes('Logged in')
             ? 'GitHub CLI authenticated'
             : 'Not authenticated with GitHub',
@@ -65,18 +76,13 @@ export class SelfDiagnosis {
     // Docker
     this.register('docker', async () => {
       try {
-        const proc = await Deno.run({
-          cmd: ['docker', 'info'],
-          stdout: 'piped',
-          stderr: 'piped',
-        });
-        const output = await new TextDecoder().decode(await proc.output());
+        const { exitCode, stdout } = await execPromise('docker', ['info']);
         return {
           id: 'docker',
           name: 'Docker',
           severity: 'critical',
-          status: proc.close() === undefined && output.includes('Server Version') ? 'pass' : 'fail',
-          message: 'Docker daemon is running',
+          status: exitCode === 0 && stdout.includes('Server Version') ? 'pass' : 'fail',
+          message: exitCode === 0 ? 'Docker daemon is running' : 'Docker is not running',
           repairable: false,
           timestamp: Date.now(),
         };
@@ -96,18 +102,14 @@ export class SelfDiagnosis {
     // Node.js
     this.register('nodejs', async () => {
       try {
-        const proc = await Deno.run({
-          cmd: ['node', '--version'],
-          stdout: 'piped',
-        });
-        const version = new TextDecoder().decode(await proc.output());
-        await proc.close();
+        const { stdout, exitCode } = await execPromise('node', ['--version']);
+        if (exitCode !== 0) throw new Error('node not found');
         return {
           id: 'nodejs',
           name: 'Node.js',
           severity: 'warning',
           status: 'pass',
-          message: `Node.js ${version.trim()}`,
+          message: `Node.js ${stdout.trim()}`,
           repairable: false,
           timestamp: Date.now(),
         };
@@ -127,13 +129,8 @@ export class SelfDiagnosis {
     // Disk Space
     this.register('disk-space', async () => {
       try {
-        const proc = await Deno.run({
-          cmd: ['df', '-h', '/'],
-          stdout: 'piped',
-        });
-        const output = new TextDecoder().decode(await proc.output());
-        await proc.close();
-        const match = output.match(/(\d+)%/);
+        const { stdout } = await execPromise('df', ['-h', '/']);
+        const match = stdout.match(/(\d+)%/);
         const usage = match ? parseInt(match[1]) : 0;
         return {
           id: 'disk-space',
@@ -161,13 +158,8 @@ export class SelfDiagnosis {
     // Memory
     this.register('memory', async () => {
       try {
-        const proc = await Deno.run({
-          cmd: ['free', '-m'],
-          stdout: 'piped',
-        });
-        const output = new TextDecoder().decode(await proc.output());
-        await proc.close();
-        const match = output.match(/Mem:\s+(\d+)\s+(\d+)/);
+        const { stdout } = await execPromise('free', ['-m']);
+        const match = stdout.match(/Mem:\s+(\d+)\s+(\d+)/);
         const total = match ? parseInt(match[1]) : 0;
         const used = match ? parseInt(match[2]) : 0;
         const usage = total > 0 ? Math.round((used / total) * 100) : 0;
@@ -197,19 +189,14 @@ export class SelfDiagnosis {
     // Network
     this.register('network', async () => {
       try {
-        const proc = await Deno.run({
-          cmd: ['curl', '-s', '-o', '/dev/null', '-w', '%{http_code}', 'https://api.github.com'],
-          stdout: 'piped',
-        });
-        const code = new TextDecoder().decode(await proc.output());
-        await proc.close();
-        const status = code === '200' ? 'pass' : 'fail';
+        const { exitCode, stdout } = await execPromise('curl', ['-s', '-o', '/dev/null', '-w', '%{http_code}', 'https://api.github.com']);
+        const status = exitCode === 0 && stdout === '200' ? 'pass' : 'fail';
         return {
           id: 'network',
           name: 'Network',
           severity: status === 'fail' ? 'critical' : 'info',
           status,
-          message: status === 'pass' ? 'Network connectivity OK' : `Network issue (HTTP ${code})`,
+          message: status === 'pass' ? 'Network connectivity OK' : `Network issue (HTTP ${stdout})`,
           repairable: false,
           timestamp: Date.now(),
         };
@@ -241,7 +228,7 @@ export class SelfDiagnosis {
       try {
         const result = await fn();
         results.push(result);
-      } catch (e) {
+      } catch (e: any) {
         results.push({
           id,
           name: id,
@@ -264,11 +251,8 @@ export class SelfDiagnosis {
     }
     try {
       const success = await repairFn();
-      return {
-        success,
-        message: success ? 'Repair successful' : 'Repair failed',
-      };
-    } catch (e) {
+      return { success, message: success ? 'Repair successful' : 'Repair failed' };
+    } catch (e: any) {
       return { success: false, message: `Repair error: ${e.message}` };
     }
   }
@@ -277,7 +261,6 @@ export class SelfDiagnosis {
     const toRepair = this.lastResults.filter(r => r.status === 'fail' && r.repairable);
     const repaired: string[] = [];
     const failed: string[] = [];
-
     for (const diag of toRepair) {
       const result = await this.repair(diag.id);
       if (result.success) {
@@ -286,7 +269,6 @@ export class SelfDiagnosis {
         failed.push(diag.id);
       }
     }
-
     return { repaired, failed };
   }
 

@@ -1,6 +1,6 @@
-# Zo Orchestration OS — Priority Roadmap
+# Zo Orchestration OS — Priority Roadmap v3.2
 
-**Purpose:** Step-by-step process to build AI capabilities that compound into app improvements.
+**Last Updated:** 2026-03-31
 
 ---
 
@@ -11,25 +11,25 @@
 - [x] Token scope: `repo` (full push/pull)
 - [x] `bloodssonsteamphone-hub` account confirmed
 - [x] CI/CD workflow added
-- [x] 12 commits pushed to GitHub
+- [x] 14+ commits pushed to GitHub
 - **Commit:** `2892c0d`
 - **Repo:** https://github.com/bloodssonsteamphone-hub/AIORCHESTRATIONOS-SOVEREIGN-PROPERTY-USE-IMPROVE-AND-GIVE-CREDIT-IF-PROFIT-IS-MADE-SHARE-THE-PIE
 
 ### 1.2 L8 Routing Brain ✅
 - [x] Local-first routing (Ollama)
-- [x] Cloud fallback (OpenRouter/Groq/Cerebras)
+- [x] Cloud fallback (Groq/Cerebras/OpenAI)
 - [x] Priority-based rule matching
 - [x] Cost/latency/quality modes
-- **Commit:** `90c4934`
 - **File:** `src/routing/L8Router.ts`
+- **Note:** Fixed `预算模式` → `budgetMode` (ASCII variable name)
 
 ### 1.3 Self-Diagnosis & Repair ✅
 - [x] Detect failure modes
 - [x] Severity levels: critical/warning/info
 - [x] Auto-repair capability
 - [x] GitHub/Docker/Node/disk/memory/network checks
-- **Commit:** `99b9087`
 - **File:** `src/diagnostics/SelfDiagnosis.ts`
+- **Note:** Fixed Deno APIs → Node.js (`child_process.spawn`)
 
 ---
 
@@ -39,21 +39,18 @@
 - [x] 3-retry fix-on-failure loop
 - [x] Timeout handling
 - [x] Verbose logging
-- **Commit:** `b928910`
 - **File:** `src/agents/CoderAgent.ts`
 
 ### 2.2 ArchitectAgent ✅
 - [x] Blueprint-driven design
 - [x] YAML save/load
 - [x] Layer/dataflow structure
-- **Commit:** `b928910`
 - **File:** `src/agents/ArchitectAgent.ts`
 
 ### 2.3 TesterAgent ✅
 - [x] Auto-generate tests
 - [x] Verify-after-generation
 - [x] Unit/integration/e2e support
-- **Commit:** `b928910`
 - **File:** `src/agents/TesterAgent.ts`
 
 ---
@@ -64,15 +61,14 @@
 - [x] Topological sort
 - [x] Before/after/onError hooks
 - [x] Error handling
-- **Commit:** `c3e77e3`
 - **File:** `src/workflow/WorkflowEngine.ts`
 
 ### 3.2 Triggers ✅
 - [x] Cron scheduling
 - [x] HTTP/MQ/FS/CLI hooks
 - [x] Blueprint hot-reload
-- **Commit:** `c3e77e3`
 - **File:** `src/workflow/WorkflowEngine.ts`
+- **Note:** Fixed CommonJS `require()` → ESM `import`
 
 ---
 
@@ -82,21 +78,18 @@
 - [x] Track success/failure/partial
 - [x] Cost/token/latency analytics
 - [x] Persist to JSON
-- **Commit:** `b98487b`
 - **File:** `src/evolution/SelfEvolution.ts`
 
 ### 4.2 Runtime Discovery ✅
 - [x] Ollama health check
-- [x] Ollama server now RUNNING
+- [x] Ollama server RUNNING
 - [x] OpenAI/Anthropic/Groq checks
-- **Commit:** `8b1944e`
 - **File:** `src/evolution/SelfEvolution.ts` + `src/runtime/OllamaManager.ts`
 
 ### 4.3 Prompt Improvement ✅
 - [x] Pattern learning
 - [x] Similarity scoring
 - [x] Auto-suggest optimizations
-- **Commit:** `b98487b`
 - **File:** `src/evolution/SelfEvolution.ts`
 
 ---
@@ -107,37 +100,33 @@
 - [x] OllamaManager wrapper
 - [x] Server running on localhost:11434
 - [x] Models: qwen2.5-coder:3b, phi4-mini, tinyllama, qwen2.5:0.5b
-- **Commit:** `8b1944e`
 - **File:** `src/runtime/OllamaManager.ts`
 
 ### 5.2 Vision (Tools) ✅
 - [x] image.generate (Ollama SD stub)
 - [x] image.edit (ImageMagick)
-- **Commit:** original
 - **File:** `src/tools/multimodal.ts`
 
 ### 5.3 Audio (Tools) ✅
 - [x] audio.transcribe (Ollama Whisper stub)
 - [x] audio.speak (espeak)
-- **Commit:** original
 - **File:** `src/tools/multimodal.ts`
 
 ### 5.4 Video (Tools) ✅
 - [x] video.extract_frames (ffmpeg)
-- **Commit:** original
 - **File:** `src/tools/multimodal.ts`
 
 ---
 
-## STEP 6: Binary Packaging 📋 NEXT
+## STEP 6: Binary Packaging 🚧 IN PROGRESS
 
 ### 6.1 Windows
-- [ ] Electron wrapper
+- [ ] Electron wrapper (workflow exists)
 - [ ] Code signing
 - [ ] Auto-update
 
 ### 6.2 Android
-- [ ] React Native/Flutter APK
+- [ ] React Native/Flutter APK (workflow exists)
 - [ ] Google Play signing
 - [ ] Auto-update
 
@@ -146,16 +135,20 @@
 - [ ] Code signing
 - [ ] Auto-update
 
+### Docker (8/8 ✅ DONE)
+- [x] python, nodejs, deno, bun, ruby, go, rust, bash
+- **All 8 built and pushed to ghcr.io**
+
 ---
 
 ## Current System Status
 
 ```
 GitHub:     ✅ Connected (bloodssonsteamphone-hub)
-Memory:     ✅ 964MB/4096MB used (24%)
+Memory:     ✅ ~960MB/4096MB (~24%)
 Disk:       ✅ Sufficient space
 Network:    ✅ Online
-Docker:     ⚠️ Not available
+Docker:     ⚠️ Not available (Codespace)
 Ollama:     ✅ RUNNING (localhost:11434)
 ├── qwen2.5-coder:3b  ✅ (code specialist - 3.1B)
 ├── phi4-mini:latest  ✅ (general - 3.8B)
@@ -165,7 +158,7 @@ Ollama:     ✅ RUNNING (localhost:11434)
 
 ---
 
-## Commit History (12 Commits)
+## Commit History (14+ Commits)
 
 | Step | Commit | Description |
 |------|--------|-------------|
@@ -176,9 +169,9 @@ Ollama:     ✅ RUNNING (localhost:11434)
 | 3.x | `c3e77e3` | WorkflowEngine |
 | 4.x | `b98487b` | SelfEvolution |
 | 5.1 | `8b1944e` | OllamaManager + Ollama running |
-| docs | `ec16b6c` | PROGRESS.md update |
-| docs | `7b7e6f5` | Consolidated status tracker |
-| docs | `b462c1b` | PRIORITIES reordered 1-6 |
+| 5.x | (various) | Multimodal tools |
+| 6.x | (docker) | 8/8 Docker images built |
+| 2026-03-31 | (current) | Bug fixes: SelfDiagnosis (Deno→Node), WorkflowEngine (CJS→ESM), L8Router (var name) |
 
 ---
 
@@ -186,14 +179,15 @@ Ollama:     ✅ RUNNING (localhost:11434)
 
 ```
 src/
-├── routing/L8Router.ts          → Step 1.2
-├── diagnostics/SelfDiagnosis.ts → Step 1.3
+├── routing/L8Router.ts          → Step 1.2 (fixed: budgetMode)
+├── diagnostics/SelfDiagnosis.ts → Step 1.3 (fixed: Node.js APIs)
 ├── agents/
 │   ├── CoderAgent.ts            → Step 2.1
 │   ├── ArchitectAgent.ts        → Step 2.2
 │   └── TesterAgent.ts           → Step 2.3
-├── workflow/WorkflowEngine.ts  → Step 3
+├── workflow/WorkflowEngine.ts   → Step 3 (fixed: ESM imports)
 ├── evolution/SelfEvolution.ts   → Step 4
 ├── runtime/OllamaManager.ts     → Step 5.1
+├── orchestration/orchestrator.ts → L6 orchestrator
 └── tools/multimodal.ts          → Steps 5.2-5.4
 ```

@@ -10,13 +10,25 @@ import { createWorkflowEngine, WORKFLOW_CATALOG } from './workflows/index.js';
 import { initTools, getAllToolMetrics, listTools } from './tools/index.js';
 import { setOrchestratorRef } from './tools/orchestrator.js';
 import { setWorkflowEngineRef } from './tools/workflow.js';
+// Observability (lazy import — may not be fully implemented)
+import * as observability from './observability/index.js';
+// Patterns (lazy import)
+import * as patterns from './patterns/index.js';
+// Runtime (lazy import)
+import * as runtime from './runtime/index.js';
+// Deployment (lazy import)
+import * as deployment from './deployment/index.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(bodyParser.json());
-// Serve L5 Dashboard app
-app.use(express.static(join(__dirname, '../public')));
+// Serve L5 Dashboard app (if public/ exists)
+const publicPath = join(__dirname, '../public');
+import { existsSync } from 'fs';
+if (existsSync(publicPath)) {
+    app.use(express.static(publicPath));
+}
 // In-memory session store
 const sessions = new Map();
 // ─── Bootstrap ────────────────────────────────────────────────────────────────
@@ -24,7 +36,7 @@ let _orchestrator = null;
 let _workflowEngine = null;
 function bootstrap() {
     console.log('\n╔══════════════════════════════════════════════════════════╗');
-    console.log('║         ZO ORCHESTRATION OS v3.1.0 — GOD MODE            ║');
+    console.log('║         ZO ORCHESTRATION OS v3.2.0 — GOD MODE            ║');
     console.log('╠══════════════════════════════════════════════════════════╣');
     const policy = getRoutingPolicy();
     console.log(`║  L8 Routing: ${policy.global}`.padEnd(49) + '║');
@@ -66,7 +78,7 @@ app.get('/api/health', (req, res) => {
         const tools = listTools();
         res.json({
             status: 'ok',
-            version: '3.1.0',
+            version: '3.2.0',
             uptime: process.uptime(),
             orchestrator: health,
             layers: {
@@ -83,7 +95,7 @@ app.get('/api/health', (req, res) => {
         });
     }
     catch {
-        res.json({ status: 'ok', version: '3.1.0', uptime: process.uptime() });
+        res.json({ status: 'ok', version: '3.2.0', uptime: process.uptime() });
     }
 });
 // ─── Build ───────────────────────────────────────────────────────────────────
@@ -199,37 +211,55 @@ app.get('/api/self-repair', async (req, res) => {
         res.status(500).json({ error: e.message });
     }
 });
+// ─── Evolution ────────────────────────────────────────────────────────────────
+app.get('/api/evolution/stats', async (req, res) => {
+    try {
+        const { evolution } = await import('./evolution/SelfEvolution.js');
+        const stats = evolution.getStats();
+        res.json(stats);
+    }
+    catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+app.get('/api/evolution/runtimes', async (req, res) => {
+    try {
+        const { evolution } = await import('./evolution/SelfEvolution.js');
+        const runtimes = await evolution.discoverRuntimes();
+        res.json({ runtimes });
+    }
+    catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
 // ─── Patterns ─────────────────────────────────────────────────────────────────
 app.get('/api/patterns', (req, res) => {
-    const { listPatterns } = require('./patterns/index.js');
     const type = req.query.type;
-    res.json({ patterns: listPatterns(type) });
+    const allPatterns = patterns.listPatterns(type);
+    res.json({ patterns: allPatterns });
 });
 app.post('/api/patterns', (req, res) => {
-    const { storePattern } = require('./patterns/index.js');
     const { name, description, type, payload, score, tags } = req.body;
     if (!name || !type)
         return res.status(400).json({ error: 'name and type required' });
-    const pattern = storePattern({ name, description: description || '', type, payload: payload || null, score: score || 0.5, tags: tags || [] });
+    const pattern = patterns.storePattern({ name, description: description || '', type, payload: payload || null, score: score || 0.5, tags: tags || [] });
     res.json(pattern);
 });
 app.delete('/api/patterns/:id', (req, res) => {
-    const { deletePattern } = require('./patterns/index.js');
-    const deleted = deletePattern(req.params.id);
+    const deleted = patterns.deletePattern(req.params.id);
     res.json({ deleted });
 });
 // ─── Runtimes ─────────────────────────────────────────────────────────────────
 app.get('/api/runtimes', (req, res) => {
-    const { listRuntimes } = require('./runtime/index.js');
-    res.json({ runtimes: listRuntimes() });
+    const runtimes = runtime.listRuntimes();
+    res.json({ runtimes });
 });
 app.post('/api/runtimes/execute', async (req, res) => {
-    const { executeCode } = require('./runtime/index.js');
-    const { code, runtime } = req.body;
-    if (!code || !runtime)
+    const { code, runtime: rtName } = req.body;
+    if (!code || !rtName)
         return res.status(400).json({ error: 'code and runtime required' });
     try {
-        const result = await executeCode(code, runtime);
+        const result = await runtime.executeCode(code, rtName);
         res.json(result);
     }
     catch (e) {
@@ -239,8 +269,7 @@ app.post('/api/runtimes/execute', async (req, res) => {
 // ─── Observability ────────────────────────────────────────────────────────────
 app.get('/api/observability/snapshot', async (req, res) => {
     try {
-        const { getDashboardSnapshot } = await import('./observability/index.js');
-        const snapshot = await getDashboardSnapshot();
+        const snapshot = observability.getDashboardSnapshot();
         res.json(snapshot);
     }
     catch (e) {
@@ -248,35 +277,38 @@ app.get('/api/observability/snapshot', async (req, res) => {
     }
 });
 app.get('/api/observability/metrics', (req, res) => {
-    const { queryMetrics } = require('./observability/index.js');
     const { name, since } = req.query;
-    const points = queryMetrics(name, since ? Number(since) : undefined);
+    const points = observability.queryMetrics(name, since ? Number(since) : undefined);
     res.json({ points });
 });
 app.get('/api/observability/events', (req, res) => {
-    const { logEvent } = require('./observability/index.js');
     const { type, data } = req.query;
     if (type && data)
-        logEvent(String(type), { data: JSON.parse(String(data)) });
+        observability.logEvent(String(type), { data: JSON.parse(String(data)) });
     res.json({ ok: true });
 });
 app.get('/metrics', (req, res) => {
-    const { prometheusMetrics } = require('./observability/index.js');
-    res.set('Content-Type', 'text/plain');
-    res.send(prometheusMetrics());
+    try {
+        const metrics = observability.prometheusMetrics();
+        res.set('Content-Type', 'text/plain');
+        res.send(metrics);
+    }
+    catch {
+        res.set('Content-Type', 'text/plain');
+        res.send('# observability not available\n');
+    }
 });
 // ─── Deployment ───────────────────────────────────────────────────────────────
 app.get('/api/deploy/targets', (req, res) => {
-    const { listTargets } = require('./deployment/index.js');
-    res.json({ targets: listTargets() });
+    const targets = deployment.listTargets();
+    res.json({ targets });
 });
 app.post('/api/deploy', async (req, res) => {
-    const { deploy } = require('./deployment/index.js');
     const { artifactPath, targetId, outputPath } = req.body;
     if (!artifactPath || !targetId || !outputPath)
         return res.status(400).json({ error: 'artifactPath, targetId, outputPath required' });
     try {
-        const result = await deploy(artifactPath, targetId, outputPath);
+        const result = await deployment.deploy(artifactPath, targetId, outputPath);
         res.json(result);
     }
     catch (e) {
@@ -321,7 +353,7 @@ app.get('/api/tools', (req, res) => {
 // ─── Start ────────────────────────────────────────────────────────────────────
 bootstrap();
 app.listen(PORT, () => {
-    console.log(`🚀  Zo Orchestration OS v3.1.0 ready on port ${PORT}`);
+    console.log(`🚀  Zo Orchestration OS v3.2.0 ready on port ${PORT}`);
     console.log(`📊  Dashboard:   http://localhost:${PORT}/`);
     console.log(`📋  Health:      http://localhost:${PORT}/api/health`);
     console.log(`🔧  Tools:       http://localhost:${PORT}/api/tools`);
